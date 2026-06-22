@@ -3,7 +3,11 @@
 import * as React from "react";
 import { motion } from "framer-motion";
 import { useApp } from "@/store/use-app";
-import { getAccent, type ModuleMeta } from "@/lib/accents";
+import {
+  getAccent,
+  STATUS_META,
+  type ModuleMeta,
+} from "@/lib/accents";
 import { Check, Circle, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -62,6 +66,14 @@ export function Atlas() {
           </span>
           not yet
         </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+          contested
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+          actively debated
+        </span>
       </div>
     </div>
   );
@@ -90,41 +102,52 @@ function ModuleColumn({
       </div>
 
       <div className="space-y-1.5">
-        {m.lessons.map((l) => (
-          <motion.button
-            key={l.id}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.25 }}
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={() => onOpenLesson(l.id)}
-            title={`${l.lessonCode} — ${l.concept}`}
-            className={cn(
-              "group relative flex aspect-square w-full flex-col items-center justify-center gap-0.5 rounded-lg border text-center transition-colors",
-              l.completed
-                ? cn(accent.soft, accent.border)
-                : "border-border/50 bg-card hover:bg-accent/40"
-            )}
-          >
-            <span
+        {m.lessons.map((l) => {
+          const sMeta = STATUS_META[l.status];
+          const contested = l.status !== "settled";
+          return (
+            <motion.button
+              key={l.id}
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.25 }}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              onClick={() => onOpenLesson(l.id)}
+              title={`${l.lessonCode} — ${l.concept}${contested ? ` · ${sMeta.label}` : ""}`}
               className={cn(
-                "font-mono text-[10px] font-medium tabular-nums",
-                l.completed ? accent.text : "text-muted-foreground/70"
+                "group relative flex aspect-square w-full flex-col items-center justify-center gap-0.5 rounded-lg border text-center transition-colors",
+                l.completed
+                  ? cn(accent.soft, accent.border)
+                  : "border-border/50 bg-card hover:bg-accent/40"
               )}
+              style={
+                contested && !l.completed
+                  ? { borderColor: `${sMeta.hex}55` }
+                  : undefined
+              }
             >
-              {l.lessonCode}
-            </span>
-            {l.completed ? (
-              <Check
-                className="h-3 w-3"
-                style={{ color: accent.hex }}
-              />
-            ) : (
-              <Circle className="h-2 w-2 text-muted-foreground/30" />
-            )}
-          </motion.button>
-        ))}
+              <span
+                className={cn(
+                  "font-mono text-[10px] font-medium tabular-nums",
+                  l.completed ? accent.text : "text-muted-foreground/70"
+                )}
+              >
+                {l.lessonCode}
+              </span>
+              {l.completed ? (
+                <Check className="h-3 w-3" style={{ color: accent.hex }} />
+              ) : contested ? (
+                <span
+                  className="h-1.5 w-1.5 rounded-full"
+                  style={{ backgroundColor: sMeta.hex }}
+                />
+              ) : (
+                <Circle className="h-2 w-2 text-muted-foreground/30" />
+              )}
+            </motion.button>
+          );
+        })}
       </div>
     </div>
   );

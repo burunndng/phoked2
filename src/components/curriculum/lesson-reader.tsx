@@ -3,7 +3,12 @@
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useApp } from "@/store/use-app";
-import { getAccent, VECTOR_META } from "@/lib/accents";
+import {
+  getAccent,
+  VECTOR_META,
+  STATUS_META,
+  type LessonStatus,
+} from "@/lib/accents";
 import type { LessonContent } from "@/lib/lesson-generator";
 import {
   ArrowLeft,
@@ -19,6 +24,8 @@ import {
   Cpu,
   Loader2,
   RotateCw,
+  AlertTriangle,
+  BookMarked,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,9 +36,11 @@ interface LessonResponse {
   id: string;
   lessonCode: string;
   concept: string;
-  originators: string;
+  keyFigures: string;
   coreClaim: string;
   vector: string;
+  status: LessonStatus;
+  criticalNote?: string | null;
   globalOrder: number;
   module: {
     id: string;
@@ -59,7 +68,9 @@ export function LessonReader() {
   const [error, setError] = React.useState<string | null>(null);
   const [reflection, setReflection] = React.useState("");
   const [savingReflection, setSavingReflection] = React.useState(false);
-  const reflectionTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const reflectionTimer = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
   const { toast } = useToast();
 
   const meta = lessonId ? findLesson(lessonId) : undefined;
@@ -82,7 +93,6 @@ export function LessonReader() {
     } finally {
       setLoading(false);
     }
-    // scroll to top on new lesson
     if (typeof window !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -92,7 +102,6 @@ export function LessonReader() {
     if (lessonId) load(lessonId);
   }, [lessonId, load]);
 
-  // debounce-save reflection
   const scheduleSave = React.useCallback(
     (text: string) => {
       if (!lessonId) return;
@@ -115,6 +124,7 @@ export function LessonReader() {
 
   if (!meta) return null;
   const accent = getAccent(meta.module.accent);
+  const statusMeta = STATUS_META[meta.lesson.status];
 
   const prev = prevLesson(lessonId!);
   const next = nextLesson(lessonId!);
@@ -131,11 +141,17 @@ export function LessonReader() {
           <span className="hidden sm:inline">Dashboard</span>
         </button>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className={cn("rounded-md px-2 py-0.5 font-medium", accent.soft, accent.text)}>
+          <span
+            className={cn(
+              "rounded-md px-2 py-0.5 font-medium",
+              accent.soft,
+              accent.text
+            )}
+          >
             {meta.module.number}.{meta.lesson.number}
           </span>
           <span className="hidden sm:inline">·</span>
-          <span className="hidden sm:inline truncate max-w-[200px]">
+          <span className="hidden max-w-[200px] truncate sm:inline">
             {meta.module.title}
           </span>
         </div>
@@ -146,11 +162,16 @@ export function LessonReader() {
           <ComposingState
             key="loading"
             concept={meta.lesson.concept}
-            originators={meta.lesson.originators}
+            keyFigures={meta.lesson.keyFigures}
             lessonCode={meta.lesson.lessonCode}
+            status={meta.lesson.status}
           />
         ) : error ? (
-          <ErrorState key="error" message={error} onRetry={() => load(lessonId!)} />
+          <ErrorState
+            key="error"
+            message={error}
+            onRetry={() => load(lessonId!)}
+          />
         ) : data ? (
           <motion.article
             key={data.id}
@@ -160,20 +181,66 @@ export function LessonReader() {
           >
             {/* Header */}
             <header className="mb-8">
-              <p className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-                Lesson {data.lessonCode}
-              </p>
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
+                  Lesson {data.lessonCode}
+                </p>
+                {/* Contestation status badge — critical review's central rec */}
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider",
+                    statusMeta.badge
+                  )}
+                  title={statusMeta.description}
+                >
+                  <span
+                    className={cn("h-1.5 w-1.5 rounded-full", statusMeta.dot)}
+                  />
+                  {statusMeta.label}
+                </span>
+              </div>
               <h1 className="mt-2 font-display text-3xl font-medium leading-tight tracking-tight sm:text-4xl">
                 {data.concept}
               </h1>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {data.originators}
-              </p>
+              <div className="mt-2 flex items-center gap-2">
+                <BookMarked className="h-3.5 w-3.5 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  <span className="text-muted-foreground/70">Key Figures · </span>
+                  {data.keyFigures}
+                </p>
+              </div>
               <div
                 className="rule-accent mt-5 w-full"
-                style={{ "--accent-color": accent.hex } as React.CSSProperties}
+                style={
+                  { "--accent-color": accent.hex } as React.CSSProperties
+                }
               />
             </header>
+
+            {/* Critical reading note — shown only for contested / actively-debated */}
+            {data.criticalNote && data.status !== "settled" && (
+              <div
+                className={cn(
+                  "mb-7 flex gap-3 rounded-xl border p-4",
+                  data.status === "actively-debated"
+                    ? "border-red-500/30 bg-red-500/[0.06]"
+                    : "border-amber-500/30 bg-amber-500/[0.06]"
+                )}
+              >
+                <AlertTriangle
+                  className="mt-0.5 h-4 w-4 shrink-0"
+                  style={{ color: statusMeta.hex }}
+                />
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    Critical reading
+                  </p>
+                  <p className="prose-reader mt-1 text-sm leading-relaxed text-foreground/90">
+                    {data.criticalNote}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Core Claim — the thesis */}
             <Section icon={Sparkles} label="Core Claim" accentHex={accent.hex}>
@@ -182,8 +249,13 @@ export function LessonReader() {
               </p>
             </Section>
 
-            {/* Mechanism */}
-            <Section icon={Cpu} label="Mechanism" accentHex={accent.hex}>
+            {/* Mechanism — reframed as a pointer, not full depth */}
+            <Section
+              icon={Cpu}
+              label="Mechanism"
+              accentHex={accent.hex}
+              hint="a pointer — consult primary sources for depth"
+            >
               <Prose text={data.content.mechanism} />
             </Section>
 
@@ -198,13 +270,21 @@ export function LessonReader() {
             </Section>
 
             {/* Conceptual Tension */}
-            <Section icon={Split} label="Conceptual Tension" accentHex={accent.hex}>
+            <Section
+              icon={Split}
+              label="Conceptual Tension"
+              accentHex={accent.hex}
+              hint={data.status !== "settled" ? "the live debate" : undefined}
+            >
               <Prose text={data.content.conceptualTension} />
             </Section>
 
             {/* Connection Node */}
             <Section icon={Link2} label="Connection Node" accentHex={accent.hex}>
-              <Prose text={data.content.connectionNode} onLessonCode={openLesson} />
+              <Prose
+                text={data.content.connectionNode}
+                onLessonCode={openLesson}
+              />
             </Section>
 
             {/* Micro-Praxis */}
@@ -282,7 +362,8 @@ export function LessonReader() {
                 }}
                 className={cn(
                   "gap-2",
-                  data.completed && "bg-emerald-600 text-white hover:bg-emerald-700"
+                  data.completed &&
+                    "bg-emerald-600 text-white hover:bg-emerald-700"
                 )}
               >
                 {data.completed ? (
@@ -341,13 +422,13 @@ function Section({
 }) {
   return (
     <section className="mb-7">
-      <div className="mb-2 flex items-center gap-2">
+      <div className="mb-2 flex flex-wrap items-center gap-2">
         <Icon className="h-3.5 w-3.5" style={{ color: accentHex }} />
         <span className="text-[11px] font-medium uppercase tracking-[0.18em]">
           {label}
         </span>
         {hint && (
-          <span className="text-[10px] uppercase tracking-wider text-muted-foreground">
+          <span className="text-[10px] italic tracking-normal text-muted-foreground">
             · {hint}
           </span>
         )}
@@ -366,13 +447,11 @@ function Prose({
   text: string;
   onLessonCode?: (id: string) => void;
 }) {
-  // We need the syllabus to map lesson codes to ids.
   const syllabus = useApp((s) => s.syllabus);
 
   const paragraphs = text.split(/\n\n+/).filter(Boolean);
 
   const renderParagraph = (p: string, i: number) => {
-    // split on lesson code references like 1.4 or 8.8 (max 2 digits each side)
     const parts = p.split(/(\d{1,2}\.\d{1,2})/g);
     return (
       <p key={i}>
@@ -402,18 +481,25 @@ function Prose({
     );
   };
 
-  return <div className="prose-reader text-foreground/90">{paragraphs.map(renderParagraph)}</div>;
+  return (
+    <div className="prose-reader text-foreground/90">
+      {paragraphs.map(renderParagraph)}
+    </div>
+  );
 }
 
 function ComposingState({
   concept,
-  originators,
+  keyFigures,
   lessonCode,
+  status,
 }: {
   concept: string;
-  originators: string;
+  keyFigures: string;
   lessonCode: string;
+  status: LessonStatus;
 }) {
+  const statusMeta = STATUS_META[status];
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -434,11 +520,24 @@ function ComposingState({
         <h2 className="mt-2 font-display text-2xl font-medium tracking-tight">
           {concept}
         </h2>
-        <p className="mt-1 text-sm text-muted-foreground">{originators}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{keyFigures}</p>
+        {status !== "settled" && (
+          <span
+            className={cn(
+              "mt-3 inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider",
+              statusMeta.badge
+            )}
+          >
+            <span
+              className={cn("h-1.5 w-1.5 rounded-full", statusMeta.dot)}
+            />
+            {statusMeta.label}
+          </span>
+        )}
         <p className="mt-6 max-w-sm text-sm leading-relaxed text-muted-foreground">
-          Each session is composed on demand — mechanism, canonical example,
-          the tension that keeps it alive, and a practice you can do in ninety
-          seconds.
+          Each session is composed on demand — a pointer to the mechanism, a
+          canonical example, the tension that keeps it alive, and a practice
+          you can do in ninety seconds.
         </p>
         <div className="mt-8 w-full max-w-md space-y-3">
           {[90, 70, 80, 60].map((w, i) => (

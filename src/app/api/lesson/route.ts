@@ -23,6 +23,27 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
   }
 
+  const base = {
+    id: lesson.id,
+    lessonCode: lesson.lessonCode,
+    concept: lesson.concept,
+    keyFigures: lesson.keyFigures,
+    coreClaim: lesson.coreClaim,
+    vector: lesson.vector,
+    status: lesson.status,
+    criticalNote: lesson.criticalNote,
+    globalOrder: lesson.globalOrder,
+    module: {
+      id: lesson.module.id,
+      number: lesson.module.number,
+      title: lesson.module.title,
+      theme: lesson.module.theme,
+      accent: lesson.module.accent,
+    },
+    reflection: lesson.progress?.reflection ?? "",
+    completed: !!lesson.progress?.completed,
+  };
+
   // If content already cached, return it.
   if (lesson.content) {
     let content: LessonContent | null = null;
@@ -32,25 +53,7 @@ export async function GET(req: NextRequest) {
       content = null;
     }
     if (content) {
-      return NextResponse.json({
-        id: lesson.id,
-        lessonCode: lesson.lessonCode,
-        concept: lesson.concept,
-        originators: lesson.originators,
-        coreClaim: lesson.coreClaim,
-        vector: lesson.vector,
-        globalOrder: lesson.globalOrder,
-        module: {
-          id: lesson.module.id,
-          number: lesson.module.number,
-          title: lesson.module.title,
-          theme: lesson.module.theme,
-          accent: lesson.module.accent,
-        },
-        content,
-        reflection: lesson.progress?.reflection ?? "",
-        completed: !!lesson.progress?.completed,
-      });
+      return NextResponse.json({ ...base, content });
     }
   }
 
@@ -58,7 +61,7 @@ export async function GET(req: NextRequest) {
   const priorLessons = await db.lesson.findMany({
     where: { globalOrder: { lt: lesson.globalOrder } },
     orderBy: { globalOrder: "asc" },
-    select: { lessonCode: true, concept: true, originators: true },
+    select: { lessonCode: true, concept: true, keyFigures: true },
   });
 
   // Compose via LLM.
@@ -66,9 +69,11 @@ export async function GET(req: NextRequest) {
     const content = await generateLessonContent({
       lessonCode: lesson.lessonCode,
       concept: lesson.concept,
-      originators: lesson.originators,
+      keyFigures: lesson.keyFigures,
       coreClaim: lesson.coreClaim,
       vector: lesson.vector,
+      status: lesson.status as "settled" | "contested" | "actively-debated",
+      criticalNote: lesson.criticalNote,
       moduleTitle: lesson.module.title,
       moduleTheme: lesson.module.theme,
       priorLessons,
@@ -82,25 +87,7 @@ export async function GET(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({
-      id: lesson.id,
-      lessonCode: lesson.lessonCode,
-      concept: lesson.concept,
-      originators: lesson.originators,
-      coreClaim: lesson.coreClaim,
-      vector: lesson.vector,
-      globalOrder: lesson.globalOrder,
-      module: {
-        id: lesson.module.id,
-        number: lesson.module.number,
-        title: lesson.module.title,
-        theme: lesson.module.theme,
-        accent: lesson.module.accent,
-      },
-      content,
-      reflection: lesson.progress?.reflection ?? "",
-      completed: !!lesson.progress?.completed,
-    });
+    return NextResponse.json({ ...base, content });
   } catch (err) {
     console.error("Lesson generation failed:", err);
     return NextResponse.json(

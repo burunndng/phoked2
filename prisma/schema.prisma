@@ -21,25 +21,33 @@ model Module {
   lessons     Lesson[]
 }
 
-// A single micro-learning session (74 total)
+// A single micro-learning session (76 total)
 model Lesson {
-  id          String   @id @default(cuid())
-  moduleId    String
-  module      Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
-  number      Int      // local number within module (1-10)
-  lessonCode  String   // human label, e.g. "1.1", "8.8"
-  globalOrder Int      // 1..74 reading order
-  concept     String
-  originators String
-  coreClaim   String
-  vector      String   // primary integrated vector
+  id            String   @id @default(cuid())
+  moduleId      String
+  module        Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  number        Int      // local number within module (1-10)
+  lessonCode    String   // human label, e.g. "1.1", "8.8"
+  globalOrder   Int      // 1..76 reading order
+  concept       String
+  // "Key Figures" (renamed from originators per critical review): primary
+  // originators, popularizers, and critics may all appear here, since the
+  // column is heuristic orientation, not citation-grade attribution.
+  // DB column kept as `originators` via @map to preserve existing data.
+  keyFigures    String   @map("originators")
+  coreClaim     String
+  vector        String   // primary integrated vector
+  // contestation status: "settled" | "contested" | "actively-debated"
+  status        String   @default("settled")
+  // optional pointer to the live debate / critique for contested lessons
+  criticalNote  String?
   // generated full lesson body, stored as JSON string matching LessonContent shape
-  content     String?
-  generatedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  content       String?
+  generatedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  progress    Progress[]
+  progress      Progress[]
 
   @@unique([moduleId, number])
   @@index([globalOrder])

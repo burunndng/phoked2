@@ -3,15 +3,19 @@
 
 export type Vector = "critical" | "materialist" | "phenomenological" | "ecological";
 
+export type LessonStatus = "settled" | "contested" | "actively-debated";
+
 export interface LessonMeta {
   id: string;
   lessonCode: string;
   number: number;
   globalOrder: number;
   concept: string;
-  originators: string;
+  keyFigures: string;
   coreClaim: string;
   vector: Vector;
+  status: LessonStatus;
+  criticalNote?: string | null;
   hasContent: boolean;
   completed: boolean;
 }
@@ -190,3 +194,51 @@ export const VECTOR_META: Record<
 export function getAccent(accent: string): AccentStyle {
   return ACCENTS[accent as Accent] ?? ACCENTS.stone;
 }
+
+// Contestation status metadata — the visual + textual treatment for the
+// per-lesson contestation badge (critical review's central recommendation).
+export const STATUS_META: Record<
+  LessonStatus,
+  {
+    label: string;
+    short: string;
+    description: string;
+    /** tailwind classes for the badge */
+    badge: string;
+    dot: string;
+    /** hex for the icon/dot */
+    hex: string;
+  }
+> = {
+  settled: {
+    label: "Settled",
+    short: "Settled",
+    description:
+      "Broadly stable in the relevant scholarly community. Read critically anyway.",
+    badge:
+      "bg-emerald-500/12 text-emerald-700 dark:text-emerald-400 border-emerald-500/25",
+    dot: "bg-emerald-500",
+    hex: "#10b981",
+  },
+  contested: {
+    label: "Contested",
+    short: "Contested",
+    description:
+      "Subject to significant ongoing critique. Read with the primary sources and the named critics.",
+    badge:
+      "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30",
+    dot: "bg-amber-500",
+    hex: "#f59e0b",
+  },
+  "actively-debated": {
+    label: "Actively Debated",
+    short: "Debated",
+    description:
+      "The framing itself is live-disputed. Do not treat the core claim as consensus.",
+    badge:
+      "bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30",
+    dot: "bg-red-500",
+    hex: "#ef4444",
+  },
+};
+

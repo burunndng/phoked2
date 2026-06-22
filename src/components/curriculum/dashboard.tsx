@@ -6,9 +6,11 @@ import { useApp } from "@/store/use-app";
 import { ProgressRing } from "./progress-ring";
 import {
   VECTOR_META,
+  STATUS_META,
   getAccent,
   type ModuleMeta,
   type Vector,
+  type LessonStatus,
 } from "@/lib/accents";
 import {
   ArrowRight,
@@ -18,6 +20,10 @@ import {
   Sparkles,
   Leaf,
   Compass,
+  X,
+  AlertTriangle,
+  BookOpen,
+  ScanSearch,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -118,6 +124,9 @@ export function Dashboard() {
         </div>
       </motion.section>
 
+      {/* Read this first — dismissible callout for new learners (guidance #18) */}
+      {syllabus.completed === 0 && <ReadThisFirst />}
+
       {/* Four integrated vectors */}
       <section className="mt-14">
         <SectionLabel
@@ -176,6 +185,9 @@ export function Dashboard() {
           ))}
         </div>
       </section>
+
+      {/* How to read this curriculum — practical guidance from the critical review */}
+      <HowToRead />
 
       {/* Acknowledgment */}
       <section className="mt-14">
@@ -295,3 +307,144 @@ function ModuleRow({
     </motion.button>
   );
 }
+
+// Dismissible "Read this first" callout for new learners.
+// Implements practical guidance #18 from the critical review: "Read the
+// 'What this version still cannot see' section first, not last."
+function ReadThisFirst() {
+  const [dismissed, setDismissed] = React.useState(false);
+  React.useEffect(() => {
+    try {
+      setDismissed(localStorage.getItem("ra:readFirstDismissed") === "1");
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  if (dismissed) return null;
+
+  const dismiss = () => {
+    try {
+      localStorage.setItem("ra:readFirstDismissed", "1");
+    } catch {
+      /* ignore */
+    }
+    setDismissed(true);
+  };
+
+  return (
+    <motion.section
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5, delay: 0.3 }}
+      className="mt-8 relative overflow-hidden rounded-2xl border border-amber-500/30 bg-amber-500/[0.06] p-6 sm:p-7"
+    >
+      <button
+        onClick={dismiss}
+        aria-label="Dismiss"
+        className="absolute right-4 top-4 rounded-full p-1 text-muted-foreground transition-colors hover:bg-amber-500/15 hover:text-foreground"
+      >
+        <X className="h-4 w-4" />
+      </button>
+      <div className="flex items-start gap-3">
+        <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+        <div className="max-w-2xl">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-700 dark:text-amber-400">
+            Read this first
+          </p>
+          <p className="prose-reader mt-2 text-sm leading-relaxed text-foreground/90">
+            This curriculum is a <strong>navigational map</strong>, not a
+            primary source. Each lesson is a 500-word pointer — enough to
+            orient you, not enough to exhaust a concept that took its
+            originators entire books. Treat the &ldquo;Key Figures&rdquo; as
+            heuristic orientation, not citation-grade; verify attribution
+            before relying on it. Lessons marked{" "}
+            <span className="font-medium text-amber-700 dark:text-amber-400">
+              Contested
+            </span>{" "}
+            or{" "}
+            <span className="font-medium text-red-700 dark:text-red-400">
+              Actively Debated
+            </span>{" "}
+            carry a critical-reading note — read it, and read the primary
+            sources alongside.
+          </p>
+          <p className="mt-3 text-xs text-muted-foreground">
+            And: read what this curriculum <em>cannot</em> see (below) before
+            you read what it can.
+          </p>
+        </div>
+      </div>
+    </motion.section>
+  );
+}
+
+// Practical guidance on how to read the curriculum, incorporating the
+// critical review's recommendations + the contestation legend.
+function HowToRead() {
+  return (
+    <section className="mt-14">
+      <SectionLabel
+        eyebrow="How to read this"
+        title="A navigational map, not a destination"
+        description="The format is a pointer, not a primary source. Each lesson is 500 words — enough to orient, not to exhaust. The four practices below keep the format honest."
+      />
+
+      {/* Contestation legend */}
+      <div className="mt-6 flex flex-wrap gap-2">
+        {(Object.keys(STATUS_META) as LessonStatus[]).map((s) => {
+          const m = STATUS_META[s];
+          return (
+            <span
+              key={s}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium",
+                m.badge
+              )}
+            >
+              <span className={cn("h-1.5 w-1.5 rounded-full", m.dot)} />
+              {m.label}
+            </span>
+          );
+        })}
+      </div>
+
+      <div className="mt-6 grid gap-3 sm:grid-cols-2">
+        {[
+          {
+            icon: BookOpen,
+            title: "Treat each lesson as a pointer",
+            body: "For every lesson, locate and at least skim the primary source by the named key figure before forming a judgment. The Mechanism section names the operative logic; the source gives you the depth.",
+          },
+          {
+            icon: ScanSearch,
+            title: "Verify attribution before citing",
+            body: "The Key Figures column is heuristic — originators, popularizers, and critics may all appear. Cross-check against the Stanford Encyclopedia of Philosophy or the relevant disciplinary handbook.",
+          },
+          {
+            icon: AlertTriangle,
+            title: "Read contested lessons with their critiques",
+            body: "Lessons marked Contested or Actively Debated carry a critical-reading note. Read it, then read the named critics. A syllabus that denounces the view from nowhere must not present its own favored frameworks as settled.",
+          },
+          {
+            icon: Compass,
+            title: "Treat the four-vector frame as a hypothesis",
+            body: "The Critical, Materialist, Phenomenological, and Ecological lenses are not the four irreducible dimensions of reality — they are a design choice. Ask, for each module, whether each vector is genuinely present or merely gestured at.",
+          },
+        ].map(({ icon: Icon, title, body }) => (
+          <div
+            key={title}
+            className="rounded-xl border border-border/60 bg-card p-5"
+          >
+            <Icon className="h-4 w-4 text-muted-foreground" strokeWidth={1.5} />
+            <h3 className="mt-2.5 text-sm font-medium leading-tight">{title}</h3>
+            <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
+              {body}
+            </p>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+

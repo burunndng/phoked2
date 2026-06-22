@@ -3,7 +3,12 @@
 import * as React from "react";
 import { motion } from "framer-motion";
 import { useApp } from "@/store/use-app";
-import { getAccent, VECTOR_META, type LessonMeta } from "@/lib/accents";
+import {
+  getAccent,
+  VECTOR_META,
+  STATUS_META,
+  type LessonMeta,
+} from "@/lib/accents";
 import { ArrowLeft, Check, ChevronRight, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -136,9 +141,18 @@ function LessonRow({
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <h3 className="truncate text-sm font-medium">{l.concept}</h3>
+          {l.status !== "settled" && (
+            <span
+              title={STATUS_META[l.status].description}
+              className={cn(
+                "inline-flex h-1.5 w-1.5 shrink-0 rounded-full",
+                STATUS_META[l.status].dot
+              )}
+            />
+          )}
         </div>
         <p className="mt-0.5 truncate text-xs text-muted-foreground">
-          {l.originators}
+          {l.keyFigures}
         </p>
       </div>
 

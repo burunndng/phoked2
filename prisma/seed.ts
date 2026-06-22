@@ -1,17 +1,22 @@
 import { db } from "../src/lib/db";
 import { SYLLABUS } from "../src/lib/syllabus";
 
+// Idempotent upsert seed: preserves existing Progress rows and cached lesson
+// `content` / `generatedAt` when re-running after schema/data updates.
+// Matches modules by `number` and lessons by (moduleId, number).
 async function main() {
-  console.log("Seeding syllabus...");
-
-  // Wipe existing data (idempotent re-seed)
-  await db.progress.deleteMany();
-  await db.lesson.deleteMany();
-  await db.module.deleteMany();
+  console.log("Upserting syllabus (progress + cached content preserved)...");
 
   for (const m of SYLLABUS) {
-    const moduleRow = await db.module.create({
-      data: {
+    const moduleRow = await db.module.upsert({
+      where: { number: m.number },
+      update: {
+        title: m.title,
+        theme: m.theme,
+        description: m.description,
+        accent: m.accent,
+      },
+      create: {
         number: m.number,
         title: m.title,
         theme: m.theme,
@@ -21,25 +26,45 @@ async function main() {
     });
 
     for (const l of m.lessons) {
-      await db.lesson.create({
-        data: {
+      await db.lesson.upsert({
+        where: { moduleId_number: { moduleId: moduleRow.id, number: l.number } },
+        update: {
+          lessonCode: l.lessonCode,
+          globalOrder: l.globalOrder,
+          concept: l.concept,
+          keyFigures: l.keyFigures,
+          coreClaim: l.coreClaim,
+          vector: l.vector,
+          status: l.status,
+          criticalNote: l.criticalNote ?? null,
+          // content / generatedAt / progress preserved on update
+        },
+        create: {
           moduleId: moduleRow.id,
           number: l.number,
           lessonCode: l.lessonCode,
           globalOrder: l.globalOrder,
           concept: l.concept,
-          originators: l.originators,
+          keyFigures: l.keyFigures,
           coreClaim: l.coreClaim,
           vector: l.vector,
+          status: l.status,
+          criticalNote: l.criticalNote ?? null,
         },
       });
     }
-    console.log(`  Module ${m.number}: ${m.lessons.length} lessons seeded`);
+    console.log(`  Module ${m.number}: ${m.lessons.length} lessons upserted`);
   }
 
   const moduleCount = await db.module.count();
   const lessonCount = await db.lesson.count();
-  console.log(`\nDone. ${moduleCount} modules, ${lessonCount} lessons in database.`);
+  const contested = await db.lesson.count({ where: { status: "contested" } });
+  const active = await db.lesson.count({
+    where: { status: "actively-debated" },
+  });
+  console.log(
+    `\nDone. ${moduleCount} modules, ${lessonCount} lessons (${contested} contested, ${active} actively-debated).`
+  );
 }
 
 main()

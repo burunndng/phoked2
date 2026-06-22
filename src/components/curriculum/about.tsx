@@ -75,11 +75,12 @@ export function About() {
           </p>
           <ul className="mt-4 space-y-2 text-sm">
             {[
-              ["Concept & Originator(s)", "What, and from whom."],
+              ["Concept & Key Figures", "What, and the names orienting you. Key Figures are heuristic — primary originators, popularizers, and critics may all appear. Not citation-grade; verify against primary sources."],
               ["Core Claim", "Two sentences. Maximum precision. No hedging."],
-              ["Mechanism", "How it actually operates in reality."],
+              ["Contestation Status", "Each lesson is marked Settled, Contested, or Actively Debated. Contested lessons carry a critical-reading note pointing to the live dispute."],
+              ["Mechanism", "A precise pointer to how it operates — not full depth. 500 words cannot deliver what took originators entire books. Consult the primary source for the full account."],
               ["Canonical Example", "Post-2020, specific, non-obvious."],
-              ["Conceptual Tension", "The paradox or critique that keeps it alive."],
+              ["Conceptual Tension", "The paradox or critique that keeps it alive. For contested lessons, this is where the live debate is foregrounded."],
               ["Connection Node", "At least one explicit cross-link to a prior lesson."],
               ["Micro-Praxis", "A ninety-second exercise you can do immediately."],
               ["Zeigarnik Hook", "One unresolved question. No answer."],

@@ -1,0 +1,60 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// A top-level module in the syllabus (8 total)
+model Module {
+  id          String   @id @default(cuid())
+  number      Int      @unique
+  title       String
+  theme       String
+  description String
+  accent      String   // tailwind hue token, e.g. "amber", "rose"
+  lessons     Lesson[]
+}
+
+// A single micro-learning session (74 total)
+model Lesson {
+  id          String   @id @default(cuid())
+  moduleId    String
+  module      Module   @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  number      Int      // local number within module (1-10)
+  lessonCode  String   // human label, e.g. "1.1", "8.8"
+  globalOrder Int      // 1..74 reading order
+  concept     String
+  originators String
+  coreClaim   String
+  vector      String   // primary integrated vector
+  // generated full lesson body, stored as JSON string matching LessonContent shape
+  content     String?
+  generatedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  progress    Progress[]
+
+  @@unique([moduleId, number])
+  @@index([globalOrder])
+}
+
+// A user's engagement with a lesson (single anonymous learner)
+model Progress {
+  id          String   @id @default(cuid())
+  lessonId    String
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  completed   Boolean  @default(false)
+  completedAt DateTime?
+  reflection  String?  // optional private notes
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([lessonId])
+}

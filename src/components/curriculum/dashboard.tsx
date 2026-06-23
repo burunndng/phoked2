@@ -26,6 +26,7 @@ import {
   ScanSearch,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/hooks/use-t";
 
 const VECTOR_ICONS: Record<Vector, React.ElementType> = {
   critical: Eye,
@@ -39,6 +40,7 @@ export function Dashboard() {
   const openModule = useApp((s) => s.openModule);
   const openLesson = useApp((s) => s.openLesson);
   const firstIncomplete = useApp((s) => s.firstIncomplete);
+  const { t } = useT();
 
   if (!syllabus) return null;
 
@@ -63,20 +65,13 @@ export function Dashboard() {
           <div className="max-w-2xl">
             <p className="mb-4 flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
               <span className="h-px w-8 bg-muted-foreground/50" />
-              Definitive Edition v3.0
+              {t("dash.eyebrow")}
             </p>
             <h1 className="font-display text-4xl font-medium leading-[1.05] tracking-tight sm:text-5xl lg:text-6xl">
-              Understanding{" "}
-              <span className="italic text-amber-600 dark:text-amber-400">
-                Reality&apos;s
-              </span>{" "}
-              Architecture
+              {t("dash.title")}
             </h1>
             <p className="mt-5 max-w-xl text-base leading-relaxed text-muted-foreground sm:text-lg">
-              Seventy-six lessons across ten weeks. A daily micro-session
-              through epistemics, cognition, social construction, power,
-              complexity, political economy, the digital paradigm — and the
-              praxis of holding them all at once.
+              {t("dash.subtitle")}
             </p>
 
             <div className="mt-7 flex flex-wrap items-center gap-3">
@@ -84,19 +79,17 @@ export function Dashboard() {
                 onClick={() => next && openLesson(next.id)}
                 className="group inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-all hover:gap-3 hover:opacity-90"
               >
-                {syllabus.completed > 0 ? "Continue" : "Begin the journey"}
+                {syllabus.completed > 0 ? t("dash.continue") : t("dash.begin")}
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </button>
               <span className="text-sm text-muted-foreground">
                 {next ? (
                   <>
-                    Next:{" "}
+                    {t("dash.next")}{" "}
                     <span className="text-foreground">{next.lessonCode}</span>{" "}
                     {next.concept}
                   </>
-                ) : (
-                  "Curriculum complete."
-                )}
+                ) : null}
               </span>
             </div>
           </div>
@@ -108,31 +101,31 @@ export function Dashboard() {
               stroke={9}
               color="oklch(0.7 0.13 70)"
               label={`${Math.round(pct * 100)}%`}
-              sublabel="complete"
+              sublabel={t("dash.complete")}
             />
             <p className="text-center text-xs text-muted-foreground">
               <span className="tabular-nums text-foreground">
                 {syllabus.completed}
               </span>{" "}
-              of{" "}
+              {t("dash.of")}{" "}
               <span className="tabular-nums">
                 {syllabus.totalLessons}
               </span>{" "}
-              lessons
+              {t("dash.lessons")}
             </p>
           </div>
         </div>
       </motion.section>
 
-      {/* Read this first — dismissible callout for new learners (guidance #18) */}
+      {/* Read this first — dismissible callout for new learners */}
       {syllabus.completed === 0 && <ReadThisFirst />}
 
       {/* Four integrated vectors */}
       <section className="mt-14">
         <SectionLabel
-          eyebrow="Four integrated vectors"
-          title="Running throughout, not bolted on"
-          description="Each lesson leads with one vector and lets the others breathe at the margins. Together they prevent the curriculum from collapsing into a single register."
+          eyebrow={t("dash.vectors.eyebrow")}
+          title={t("dash.vectors.title")}
+          description={t("dash.vectors.desc")}
         />
         <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {(Object.keys(VECTOR_META) as Vector[]).map((v, i) => {
@@ -156,10 +149,10 @@ export function Dashboard() {
                   style={{ color: meta.hex }}
                 />
                 <h3 className="mt-3 text-sm font-medium leading-tight">
-                  {meta.label}
+                  {t(meta.labelKey)}
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-                  {meta.description}
+                  {t(meta.descKey)}
                 </p>
               </motion.div>
             );
@@ -170,9 +163,9 @@ export function Dashboard() {
       {/* The 8-module spine */}
       <section className="mt-14">
         <SectionLabel
-          eyebrow="The journey"
-          title="Eight modules, one architecture"
-          description="The sequence moves from who is knowing, through how collectives construct reality and how power operates, to the praxis of navigating it all."
+          eyebrow={t("dash.journey.eyebrow")}
+          title={t("dash.journey.title")}
+          description={t("dash.journey.desc")}
         />
         <div className="mt-6 space-y-2.5">
           {syllabus.modules.map((m, i) => (
@@ -186,24 +179,20 @@ export function Dashboard() {
         </div>
       </section>
 
-      {/* How to read this curriculum — practical guidance from the critical review */}
+      {/* How to read this curriculum */}
       <HowToRead />
 
       {/* Acknowledgment */}
       <section className="mt-14">
         <div className="rounded-2xl border border-dashed border-border/70 bg-muted/20 p-7 sm:p-9">
           <p className="mb-2 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-            What this version still cannot see
+            {t("ack.eyebrow")}
           </p>
           <p className="max-w-3xl font-display text-lg italic leading-relaxed text-foreground/80">
-            Aesthetic and artistic knowledge is absent. Queer theory beyond
-            Butler is thin. Non-Western systems thought appears at the margins.
-            The body at scale — trauma, somatic politics, disability — is
-            underrepresented.
+            {t("ack.body")}
           </p>
           <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">
-            These are not defects to be embarrassed by. They are the next
-            iteration&apos;s brief.
+            {t("ack.footer")}
           </p>
         </div>
       </section>
@@ -248,6 +237,7 @@ function ModuleRow({
   onOpen: () => void;
 }) {
   const accent = getAccent(m.accent);
+  const { t } = useT();
   const done = m.lessons.filter((l) => l.completed).length;
   const total = m.lessons.length;
   const allDone = done === total;
@@ -280,7 +270,7 @@ function ModuleRow({
           <h3 className="truncate font-medium leading-tight">{m.title}</h3>
           {allDone && (
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:text-emerald-400">
-              <Check className="h-3 w-3" /> done
+              <Check className="h-3 w-3" /> {t("dash.done")}
             </span>
           )}
         </div>
@@ -309,10 +299,9 @@ function ModuleRow({
 }
 
 // Dismissible "Read this first" callout for new learners.
-// Implements practical guidance #18 from the critical review: "Read the
-// 'What this version still cannot see' section first, not last."
 function ReadThisFirst() {
   const [dismissed, setDismissed] = React.useState(false);
+  const { t } = useT();
   React.useEffect(() => {
     try {
       setDismissed(localStorage.getItem("ra:readFirstDismissed") === "1");
@@ -341,7 +330,7 @@ function ReadThisFirst() {
     >
       <button
         onClick={dismiss}
-        aria-label="Dismiss"
+        aria-label={t("readFirst.dismiss")}
         className="absolute right-4 top-4 rounded-full p-1 text-muted-foreground transition-colors hover:bg-amber-500/15 hover:text-foreground"
       >
         <X className="h-4 w-4" />
@@ -350,28 +339,13 @@ function ReadThisFirst() {
         <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
         <div className="max-w-2xl">
           <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-amber-700 dark:text-amber-400">
-            Read this first
+            {t("readFirst.label")}
           </p>
           <p className="prose-reader mt-2 text-sm leading-relaxed text-foreground/90">
-            This curriculum is a <strong>navigational map</strong>, not a
-            primary source. Each lesson is a 500-word pointer — enough to
-            orient you, not enough to exhaust a concept that took its
-            originators entire books. Treat the &ldquo;Key Figures&rdquo; as
-            heuristic orientation, not citation-grade; verify attribution
-            before relying on it. Lessons marked{" "}
-            <span className="font-medium text-amber-700 dark:text-amber-400">
-              Contested
-            </span>{" "}
-            or{" "}
-            <span className="font-medium text-red-700 dark:text-red-400">
-              Actively Debated
-            </span>{" "}
-            carry a critical-reading note — read it, and read the primary
-            sources alongside.
+            {t("readFirst.body")}
           </p>
           <p className="mt-3 text-xs text-muted-foreground">
-            And: read what this curriculum <em>cannot</em> see (below) before
-            you read what it can.
+            {t("readFirst.footer")}
           </p>
         </div>
       </div>
@@ -379,15 +353,22 @@ function ReadThisFirst() {
   );
 }
 
-// Practical guidance on how to read the curriculum, incorporating the
-// critical review's recommendations + the contestation legend.
+// Practical guidance on how to read the curriculum.
 function HowToRead() {
+  const { t } = useT();
+  const cards = [
+    { icon: BookOpen, title: t("howto.1.title"), body: t("howto.1.body") },
+    { icon: ScanSearch, title: t("howto.2.title"), body: t("howto.2.body") },
+    { icon: AlertTriangle, title: t("howto.3.title"), body: t("howto.3.body") },
+    { icon: Compass, title: t("howto.4.title"), body: t("howto.4.body") },
+  ];
+
   return (
     <section className="mt-14">
       <SectionLabel
-        eyebrow="How to read this"
-        title="A navigational map, not a destination"
-        description="The format is a pointer, not a primary source. Each lesson is 500 words — enough to orient, not to exhaust. The four practices below keep the format honest."
+        eyebrow={t("howto.eyebrow")}
+        title={t("howto.title")}
+        description={t("howto.desc")}
       />
 
       {/* Contestation legend */}
@@ -403,35 +384,14 @@ function HowToRead() {
               )}
             >
               <span className={cn("h-1.5 w-1.5 rounded-full", m.dot)} />
-              {m.label}
+              {t(m.labelKey)}
             </span>
           );
         })}
       </div>
 
       <div className="mt-6 grid gap-3 sm:grid-cols-2">
-        {[
-          {
-            icon: BookOpen,
-            title: "Treat each lesson as a pointer",
-            body: "For every lesson, locate and at least skim the primary source by the named key figure before forming a judgment. The Mechanism section names the operative logic; the source gives you the depth.",
-          },
-          {
-            icon: ScanSearch,
-            title: "Verify attribution before citing",
-            body: "The Key Figures column is heuristic — originators, popularizers, and critics may all appear. Cross-check against the Stanford Encyclopedia of Philosophy or the relevant disciplinary handbook.",
-          },
-          {
-            icon: AlertTriangle,
-            title: "Read contested lessons with their critiques",
-            body: "Lessons marked Contested or Actively Debated carry a critical-reading note. Read it, then read the named critics. A syllabus that denounces the view from nowhere must not present its own favored frameworks as settled.",
-          },
-          {
-            icon: Compass,
-            title: "Treat the four-vector frame as a hypothesis",
-            body: "The Critical, Materialist, Phenomenological, and Ecological lenses are not the four irreducible dimensions of reality — they are a design choice. Ask, for each module, whether each vector is genuinely present or merely gestured at.",
-          },
-        ].map(({ icon: Icon, title, body }) => (
+        {cards.map(({ icon: Icon, title, body }) => (
           <div
             key={title}
             className="rounded-xl border border-border/60 bg-card p-5"
@@ -447,4 +407,3 @@ function HowToRead() {
     </section>
   );
 }
-

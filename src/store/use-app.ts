@@ -2,16 +2,31 @@
 
 import { create } from "zustand";
 import type { SyllabusData, ModuleMeta, LessonMeta } from "@/lib/accents";
+import type { Lang } from "@/lib/i18n";
 
 export type View = "dashboard" | "module" | "lesson" | "atlas" | "about";
+
+const LANG_KEY = "ra:lang";
+
+function readStoredLang(): Lang {
+  if (typeof window === "undefined") return "en";
+  try {
+    const v = localStorage.getItem(LANG_KEY);
+    return v === "es" ? "es" : "en";
+  } catch {
+    return "en";
+  }
+}
 
 interface AppState {
   view: View;
   activeModuleId: string | null;
   activeLessonId: string | null;
   syllabus: SyllabusData | null;
+  syllabusLang: Lang | null; // which lang the loaded syllabus is in
   syllabusLoading: boolean;
   syllabusError: string | null;
+  lang: Lang;
 
   // navigation
   goDashboard: () => void;
@@ -19,6 +34,10 @@ interface AppState {
   goAbout: () => void;
   openModule: (moduleId: string) => void;
   openLesson: (lessonId: string) => void;
+
+  // language
+  setLang: (lang: Lang) => void;
+  initLang: () => void;
 
   // data
   loadSyllabus: () => Promise<void>;
@@ -41,8 +60,10 @@ export const useApp = create<AppState>((set, get) => ({
   activeModuleId: null,
   activeLessonId: null,
   syllabus: null,
+  syllabusLang: null,
   syllabusLoading: false,
   syllabusError: null,
+  lang: "en",
 
   goDashboard: () => set({ view: "dashboard" }),
   goAtlas: () => set({ view: "atlas" }),
@@ -52,13 +73,34 @@ export const useApp = create<AppState>((set, get) => ({
 
   openLesson: (lessonId) => set({ view: "lesson", activeLessonId: lessonId }),
 
+  setLang: (lang) => {
+    set({ lang });
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(LANG_KEY, lang);
+      } catch {
+        /* ignore */
+      }
+    }
+    // force syllabus reload in the new language
+    get().loadSyllabus();
+  },
+
+  initLang: () => {
+    const stored = readStoredLang();
+    if (stored !== get().lang) {
+      set({ lang: stored });
+    }
+  },
+
   loadSyllabus: async () => {
+    const lang = get().lang;
     set({ syllabusLoading: true, syllabusError: null });
     try {
-      const res = await fetch("/api/syllabus");
+      const res = await fetch(`/api/syllabus?lang=${lang}`);
       if (!res.ok) throw new Error("Failed to load syllabus");
       const data: SyllabusData = await res.json();
-      set({ syllabus: data, syllabusLoading: false });
+      set({ syllabus: data, syllabusLang: lang, syllabusLoading: false });
     } catch (e) {
       set({
         syllabusLoading: false,

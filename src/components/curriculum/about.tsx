@@ -12,6 +12,7 @@ import {
   Leaf,
   Compass,
 } from "lucide-react";
+import { useT } from "@/hooks/use-t";
 
 const VECTOR_ICONS: Record<Vector, React.ElementType> = {
   critical: Eye,
@@ -22,6 +23,19 @@ const VECTOR_ICONS: Record<Vector, React.ElementType> = {
 
 export function About() {
   const goDashboard = useApp((s) => s.goDashboard);
+  const { t } = useT();
+
+  const structureItems = [
+    { k: t("about.structure.1.k"), v: t("about.structure.1.v") },
+    { k: t("about.structure.2.k"), v: t("about.structure.2.v") },
+    { k: t("about.structure.3.k"), v: t("about.structure.3.v") },
+    { k: t("about.structure.4.k"), v: t("about.structure.4.v") },
+    { k: t("about.structure.5.k"), v: t("about.structure.5.v") },
+    { k: t("about.structure.6.k"), v: t("about.structure.6.v") },
+    { k: t("about.structure.7.k"), v: t("about.structure.7.v") },
+    { k: t("about.structure.8.k"), v: t("about.structure.8.v") },
+    { k: t("about.structure.9.k"), v: t("about.structure.9.v") },
+  ];
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
@@ -30,7 +44,7 @@ export function About() {
         className="group mb-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-        Dashboard
+        {t("nav.dashboard")}
       </button>
 
       <motion.div
@@ -40,51 +54,27 @@ export function About() {
       >
         <p className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
           <Compass className="h-3.5 w-3.5" />
-          About this curriculum
+          {t("about.eyebrow")}
         </p>
         <h1 className="mt-2 font-display text-3xl font-medium tracking-tight sm:text-4xl">
-          A daily practice of seeing
+          {t("about.title")}
         </h1>
 
         <div className="prose-reader mt-6 space-y-4 text-foreground/85">
-          <p>
-            This is not a course to be completed. It is an instrument to be
-            kept. Seventy-six lessons, five to ten minutes each, composed on
-            demand and held in memory — a daily practice of seeing how reality
-            is built, by whom, and at whose expense.
-          </p>
-          <p>
-            The sequence has a logic. It moves from{" "}
-            <em>who</em> is knowing, through <em>how</em> we know and{" "}
-            <em>what the mind does</em>, to how collectives construct reality,
-            how power operates on that construction, how systems behave, the
-            specific material form of the present, the information envelope we
-            live inside — and finally to navigation. Each lesson cross-references
-            at least one prior lesson. The cross-references are load-bearing:
-            they are how the architecture holds.
-          </p>
+          <p>{t("about.body1")}</p>
+          <p>{t("about.body2")}</p>
         </div>
 
         {/* Delivery spec */}
         <div className="mt-10 rounded-xl border border-border/60 bg-card p-6">
           <h2 className="font-display text-lg font-medium">
-            The lesson structure
+            {t("about.structure.title")}
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Every session, the same eight movements — never skipped.
+            {t("about.structure.desc")}
           </p>
           <ul className="mt-4 space-y-2 text-sm">
-            {[
-              ["Concept & Key Figures", "What, and the names orienting you. Key Figures are heuristic — primary originators, popularizers, and critics may all appear. Not citation-grade; verify against primary sources."],
-              ["Core Claim", "Two sentences. Maximum precision. No hedging."],
-              ["Contestation Status", "Each lesson is marked Settled, Contested, or Actively Debated. Contested lessons carry a critical-reading note pointing to the live dispute."],
-              ["Mechanism", "A precise pointer to how it operates — not full depth. 500 words cannot deliver what took originators entire books. Consult the primary source for the full account."],
-              ["Canonical Example", "Post-2020, specific, non-obvious."],
-              ["Conceptual Tension", "The paradox or critique that keeps it alive. For contested lessons, this is where the live debate is foregrounded."],
-              ["Connection Node", "At least one explicit cross-link to a prior lesson."],
-              ["Micro-Praxis", "A ninety-second exercise you can do immediately."],
-              ["Zeigarnik Hook", "One unresolved question. No answer."],
-            ].map(([k, v]) => (
+            {structureItems.map(({ k, v }) => (
               <li key={k} className="flex gap-3">
                 <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-amber-500" />
                 <span>
@@ -99,10 +89,10 @@ export function About() {
         {/* Vectors */}
         <div className="mt-10">
           <h2 className="font-display text-lg font-medium">
-            Four integrated vectors
+            {t("about.vectors.title")}
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Running throughout, not bolted on.
+            {t("about.vectors.desc")}
           </p>
           <div className="mt-4 space-y-3">
             {(Object.keys(VECTOR_META) as Vector[]).map((v) => {
@@ -118,9 +108,9 @@ export function About() {
                     style={{ color: meta.hex }}
                   />
                   <div>
-                    <p className="text-sm font-medium">{meta.label}</p>
+                    <p className="text-sm font-medium">{t(meta.labelKey)}</p>
                     <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
-                      {meta.description}
+                      {t(meta.descKey)}
                     </p>
                   </div>
                 </div>
@@ -132,19 +122,13 @@ export function About() {
         {/* Honesty */}
         <div className="mt-10 rounded-xl border border-dashed border-border/70 bg-muted/20 p-6">
           <h2 className="font-display text-lg font-medium">
-            What this version still cannot see
+            {t("about.blind.title")}
           </h2>
           <p className="prose-reader mt-3 italic text-foreground/80">
-            Aesthetic and artistic knowledge is entirely absent. Queer theory
-            beyond Butler is thin. Non-Western systems thought — African ubuntu
-            cosmology, Andean sumak kawsay, Daoist process philosophy — appears
-            at the margins. The body at scale — trauma studies, somatic
-            politics, disability studies — is underrepresented relative to its
-            explanatory power.
+            {t("about.blind.body")}
           </p>
           <p className="mt-3 text-sm text-muted-foreground">
-            These are not defects to be embarrassed by. They are the next
-            iteration&apos;s brief.
+            {t("about.blind.footer")}
           </p>
         </div>
       </motion.div>

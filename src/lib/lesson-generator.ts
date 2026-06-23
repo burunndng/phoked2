@@ -1,4 +1,5 @@
 import ZAI from "z-ai-web-dev-sdk";
+import type { Lang } from "@/lib/i18n";
 
 // The generated body of a lesson, following the mandated delivery specification.
 export interface LessonContent {
@@ -23,6 +24,7 @@ export interface LessonContext {
   criticalNote?: string | null;
   moduleTitle: string;
   moduleTheme: string;
+  lang: Lang;
   // prior lessons (globalOrder < current) to draw cross-references from
   priorLessons: { lessonCode: string; concept: string; keyFigures: string }[];
 }
@@ -38,6 +40,8 @@ const SYSTEM_PROMPT = [
   'You are the composing intelligence behind a micro-learning curriculum called "Understanding Reality\'s Architecture" — a 10-week, 76-lesson journey through epistemics, cognition, social construction, power, complexity, political economy, the digital paradigm, and integrative praxis.',
   "",
   "Your task: compose a single lesson session following a MANDATORY eight-part structure. The register rotates across empirical, philosophical, and contemplative. The audience is a thoughtful adult learner willing to sit with difficulty. Precision over comfort. Never flatten a concept to make it palatable.",
+  "",
+  "LANGUAGE: You will be told which language to compose in. When composing in Castellano (European Spanish), use European Spanish vocabulary and conventions (e.g., 'ordenador' not 'computadora') and a formal academic register. Preserve proper names of scholars and standard technical acronyms (LLM, AQAL, BANI) untranslated. The JSON keys remain in English regardless of output language.",
   "",
   "INTELLECTUAL HONESTY RULES (these are load-bearing):",
   '- The "Key Figures" provided are heuristic orientation, NOT citation-grade. They may include popularizers or critics alongside originators. Do not treat them as a single co-equal originator group; if the critical note flags a conflation or a dissent, honor it.',
@@ -76,8 +80,15 @@ function buildUserPrompt(ctx: LessonContext): string {
     ? `\nCRITICAL NOTE (honor this in the TENSION section; do not contradict it): ${ctx.criticalNote}`
     : "";
 
+  const langInstruction =
+    ctx.lang === "es"
+      ? "OUTPUT LANGUAGE: Castellano (European Spanish). Compose ALL section values in European Spanish with a formal academic register. Keep JSON keys in English. Preserve scholar names and technical acronyms (LLM, AQAL, etc.) untranslated."
+      : "OUTPUT LANGUAGE: English.";
+
   return [
     `Compose lesson ${ctx.lessonCode}.`,
+    "",
+    langInstruction,
     "",
     `MODULE: ${ctx.moduleTitle}`,
     `MODULE THEME: ${ctx.moduleTheme}`,

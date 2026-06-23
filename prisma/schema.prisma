@@ -12,13 +12,17 @@ datasource db {
 
 // A top-level module in the syllabus (8 total)
 model Module {
-  id          String   @id @default(cuid())
-  number      Int      @unique
-  title       String
-  theme       String
-  description String
-  accent      String   // tailwind hue token, e.g. "amber", "rose"
-  lessons     Lesson[]
+  id            String   @id @default(cuid())
+  number        Int      @unique
+  title         String
+  theme         String
+  description   String
+  accent        String   // tailwind hue token, e.g. "amber", "rose"
+  // Spanish (Castellano) translations, populated by the translation seed.
+  titleEs       String?
+  themeEs       String?
+  descriptionEs String?
+  lessons       Lesson[]
 }
 
 // A single micro-learning session (76 total)
@@ -41,7 +45,11 @@ model Lesson {
   status        String   @default("settled")
   // optional pointer to the live debate / critique for contested lessons
   criticalNote  String?
-  // generated full lesson body, stored as JSON string matching LessonContent shape
+  // Spanish (Castellano) translations, populated by the translation seed.
+  conceptEs       String?
+  coreClaimEs     String?
+  criticalNoteEs  String?
+  // generated full lesson body, stored as JSON: {"en"?: LessonContent, "es"?: LessonContent}
   content       String?
   generatedAt   DateTime?
   createdAt     DateTime @default(now())

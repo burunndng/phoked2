@@ -1,8 +1,15 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import type { Lang } from "@/lib/i18n";
 
-// GET /api/syllabus — full curriculum map: modules + lesson metadata + progress
-export async function GET() {
+function pickLang(searchParams: URLSearchParams): Lang {
+  return searchParams.get("lang") === "es" ? "es" : "en";
+}
+
+// GET /api/syllabus?lang=en|es — full curriculum map in the requested language
+export async function GET(req: NextRequest) {
+  const lang = pickLang(req.nextUrl.searchParams);
+
   const modules = await db.module.findMany({
     orderBy: { number: "asc" },
     include: {
@@ -22,27 +29,44 @@ export async function GET() {
   return NextResponse.json({
     totalLessons,
     completed,
-    modules: modules.map((m) => ({
-      id: m.id,
-      number: m.number,
-      title: m.title,
-      theme: m.theme,
-      description: m.description,
-      accent: m.accent,
-      lessons: m.lessons.map((l) => ({
-        id: l.id,
-        lessonCode: l.lessonCode,
-        number: l.number,
-        globalOrder: l.globalOrder,
-        concept: l.concept,
-        keyFigures: l.keyFigures,
-        coreClaim: l.coreClaim,
-        vector: l.vector,
-        status: l.status,
-        criticalNote: l.criticalNote,
-        hasContent: !!l.content,
-        completed: !!l.progress?.completed,
-      })),
-    })),
+    lang,
+    modules: modules.map((m) => {
+      const title = lang === "es" && m.titleEs ? m.titleEs : m.title;
+      const theme = lang === "es" && m.themeEs ? m.themeEs : m.theme;
+      const description =
+        lang === "es" && m.descriptionEs ? m.descriptionEs : m.description;
+      return {
+        id: m.id,
+        number: m.number,
+        title,
+        theme,
+        description,
+        accent: m.accent,
+        lessons: m.lessons.map((l) => {
+          const concept =
+            lang === "es" && l.conceptEs ? l.conceptEs : l.concept;
+          const coreClaim =
+            lang === "es" && l.coreClaimEs ? l.coreClaimEs : l.coreClaim;
+          const criticalNote =
+            lang === "es" && l.criticalNoteEs !== null
+              ? l.criticalNoteEs
+              : l.criticalNote;
+          return {
+            id: l.id,
+            lessonCode: l.lessonCode,
+            number: l.number,
+            globalOrder: l.globalOrder,
+            concept,
+            keyFigures: l.keyFigures,
+            coreClaim,
+            vector: l.vector,
+            status: l.status,
+            criticalNote,
+            hasContent: !!l.content,
+            completed: !!l.progress?.completed,
+          };
+        }),
+      };
+    }),
   });
 }

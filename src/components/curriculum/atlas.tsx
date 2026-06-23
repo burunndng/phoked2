@@ -10,11 +10,13 @@ import {
 } from "@/lib/accents";
 import { Check, Circle, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/hooks/use-t";
 
 export function Atlas() {
   const syllabus = useApp((s) => s.syllabus);
   const openLesson = useApp((s) => s.openLesson);
   const goDashboard = useApp((s) => s.goDashboard);
+  const { t } = useT();
 
   if (!syllabus) return null;
 
@@ -25,20 +27,19 @@ export function Atlas() {
         className="group mb-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-        Dashboard
+        {t("nav.dashboard")}
       </button>
 
       <div className="mb-10 max-w-2xl">
         <p className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
           <span className="h-px w-6 bg-muted-foreground/40" />
-          The Atlas
+          {t("atlas.eyebrow")}
         </p>
         <h1 className="mt-2 font-display text-3xl font-medium tracking-tight sm:text-4xl">
-          All seventy-six lessons
+          {t("atlas.title")}
         </h1>
         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-          The full architecture at a glance. Each cell is a lesson; each column
-          is a module. Tap any cell to compose and read it.
+          {t("atlas.desc")}
         </p>
       </div>
 
@@ -58,21 +59,21 @@ export function Atlas() {
           <span className="flex h-4 w-4 items-center justify-center rounded bg-emerald-500/20">
             <Check className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
           </span>
-          completed
+          {t("atlas.legend.completed")}
         </span>
         <span className="flex items-center gap-1.5">
           <span className="flex h-4 w-4 items-center justify-center rounded border border-border/70">
             <Circle className="h-2.5 w-2.5 text-muted-foreground/60" />
           </span>
-          not yet
+          {t("atlas.legend.notYet")}
         </span>
         <span className="flex items-center gap-1.5">
           <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
-          contested
+          {t("atlas.legend.contested")}
         </span>
         <span className="flex items-center gap-1.5">
           <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
-          actively debated
+          {t("atlas.legend.debated")}
         </span>
       </div>
     </div>
@@ -87,6 +88,7 @@ function ModuleColumn({
   onOpenLesson: (id: string) => void;
 }) {
   const accent = getAccent(m.accent);
+  const { t } = useT();
   const done = m.lessons.filter((l) => l.completed).length;
 
   return (
@@ -114,7 +116,9 @@ function ModuleColumn({
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => onOpenLesson(l.id)}
-              title={`${l.lessonCode} — ${l.concept}${contested ? ` · ${sMeta.label}` : ""}`}
+              title={`${l.lessonCode} — ${l.concept}${
+                contested ? ` · ${t(sMeta.labelKey)}` : ""
+              }`}
               className={cn(
                 "group relative flex aspect-square w-full flex-col items-center justify-center gap-0.5 rounded-lg border text-center transition-colors",
                 l.completed

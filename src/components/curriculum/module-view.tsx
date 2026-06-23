@@ -11,12 +11,14 @@ import {
 } from "@/lib/accents";
 import { ArrowLeft, Check, ChevronRight, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useT } from "@/hooks/use-t";
 
 export function ModuleView() {
   const moduleId = useApp((s) => s.activeModuleId);
   const findModule = useApp((s) => s.findModule);
   const openLesson = useApp((s) => s.openLesson);
   const goDashboard = useApp((s) => s.goDashboard);
+  const { t } = useT();
 
   const m = moduleId ? findModule(moduleId) : undefined;
 
@@ -31,7 +33,7 @@ export function ModuleView() {
         className="group mb-8 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-        All modules
+        {t("mod.allModules")}
       </button>
 
       {/* Module header */}
@@ -45,8 +47,10 @@ export function ModuleView() {
           accent.gradient
         )}
       >
-        <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full opacity-20 blur-2xl"
-             style={{ backgroundColor: accent.hex }} />
+        <div
+          className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full opacity-20 blur-2xl"
+          style={{ backgroundColor: accent.hex }}
+        />
         <div className="relative">
           <div className="flex items-center gap-3">
             <span
@@ -60,7 +64,7 @@ export function ModuleView() {
             </span>
             <div>
               <p className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-                Module {m.number} · {done}/{m.lessons.length} complete
+                {t("mod.complete")} {m.number} · {done}/{m.lessons.length}
               </p>
               <h1 className="font-display text-2xl font-medium leading-tight tracking-tight sm:text-3xl">
                 {m.title}
@@ -81,7 +85,7 @@ export function ModuleView() {
       <div className="mt-8">
         <p className="mb-3 flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
           <BookOpen className="h-3.5 w-3.5" />
-          {m.lessons.length} lessons
+          {m.lessons.length} {t("mod.lessons")}
         </p>
         <div className="space-y-1.5">
           {m.lessons.map((l, i) => (
@@ -111,6 +115,7 @@ function LessonRow({
   onOpen: () => void;
 }) {
   const vMeta = VECTOR_META[l.vector];
+  const { t } = useT();
   return (
     <motion.button
       initial={{ opacity: 0, y: 6 }}
@@ -131,11 +136,7 @@ function LessonRow({
             : accentSoft + " text-muted-foreground"
         )}
       >
-        {l.completed ? (
-          <Check className="h-4 w-4" />
-        ) : (
-          l.lessonCode
-        )}
+        {l.completed ? <Check className="h-4 w-4" /> : l.lessonCode}
       </span>
 
       <div className="min-w-0 flex-1">
@@ -143,7 +144,7 @@ function LessonRow({
           <h3 className="truncate text-sm font-medium">{l.concept}</h3>
           {l.status !== "settled" && (
             <span
-              title={STATUS_META[l.status].description}
+              title={t(STATUS_META[l.status].descKey)}
               className={cn(
                 "inline-flex h-1.5 w-1.5 shrink-0 rounded-full",
                 STATUS_META[l.status].dot
@@ -167,7 +168,7 @@ function LessonRow({
           className="h-1.5 w-1.5 rounded-full"
           style={{ backgroundColor: vMeta.hex }}
         />
-        {vMeta.short}
+        {t(vMeta.shortKey)}
       </span>
 
       <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/40 transition-all group-hover:translate-x-0.5 group-hover:text-foreground" />

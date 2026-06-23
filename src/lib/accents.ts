@@ -159,34 +159,35 @@ export const ACCENTS: Record<Accent, AccentStyle> = {
 
 export const VECTOR_META: Record<
   Vector,
-  { label: string; short: string; description: string; hex: string }
+  {
+    labelKey: string;
+    shortKey: string;
+    descKey: string;
+    hex: string;
+  }
 > = {
   critical: {
-    label: "Critical / Structural",
-    short: "Critical",
-    description:
-      "Race, gender, coloniality, class as constitutive, not additive.",
+    labelKey: "vector.critical.label",
+    shortKey: "vector.critical.short",
+    descKey: "vector.critical.desc",
     hex: "#dc2626",
   },
   materialist: {
-    label: "Materialist / Formal",
-    short: "Materialist",
-    description:
-      "Thermodynamics, complexity science, cognitive architecture.",
+    labelKey: "vector.materialist.label",
+    shortKey: "vector.materialist.short",
+    descKey: "vector.materialist.desc",
     hex: "#ea580c",
   },
   phenomenological: {
-    label: "Phenomenological / Contemplative",
-    short: "Phenomenological",
-    description:
-      "First-person inquiry as rigorous method, not supplement.",
+    labelKey: "vector.phenomenological.label",
+    shortKey: "vector.phenomenological.short",
+    descKey: "vector.phenomenological.desc",
     hex: "#7c3aed",
   },
   ecological: {
-    label: "Ecological / More-than-human",
-    short: "Ecological",
-    description:
-      "The living world as analytical actor, not backdrop.",
+    labelKey: "vector.ecological.label",
+    shortKey: "vector.ecological.short",
+    descKey: "vector.ecological.desc",
     hex: "#059669",
   },
 };
@@ -200,9 +201,8 @@ export function getAccent(accent: string): AccentStyle {
 export const STATUS_META: Record<
   LessonStatus,
   {
-    label: string;
-    short: string;
-    description: string;
+    labelKey: string;
+    descKey: string;
     /** tailwind classes for the badge */
     badge: string;
     dot: string;
@@ -211,30 +211,24 @@ export const STATUS_META: Record<
   }
 > = {
   settled: {
-    label: "Settled",
-    short: "Settled",
-    description:
-      "Broadly stable in the relevant scholarly community. Read critically anyway.",
+    labelKey: "status.settled.label",
+    descKey: "status.settled.desc",
     badge:
       "bg-emerald-500/12 text-emerald-700 dark:text-emerald-400 border-emerald-500/25",
     dot: "bg-emerald-500",
     hex: "#10b981",
   },
   contested: {
-    label: "Contested",
-    short: "Contested",
-    description:
-      "Subject to significant ongoing critique. Read with the primary sources and the named critics.",
+    labelKey: "status.contested.label",
+    descKey: "status.contested.desc",
     badge:
       "bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30",
     dot: "bg-amber-500",
     hex: "#f59e0b",
   },
   "actively-debated": {
-    label: "Actively Debated",
-    short: "Debated",
-    description:
-      "The framing itself is live-disputed. Do not treat the core claim as consensus.",
+    labelKey: "status.actively-debated.label",
+    descKey: "status.actively-debated.desc",
     badge:
       "bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30",
     dot: "bg-red-500",

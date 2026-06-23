@@ -31,6 +31,8 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useT } from "@/hooks/use-t";
+import type { Lang } from "@/lib/i18n";
 
 interface LessonResponse {
   id: string;
@@ -56,12 +58,14 @@ interface LessonResponse {
 
 export function LessonReader() {
   const lessonId = useApp((s) => s.activeLessonId);
+  const lang = useApp((s) => s.lang);
   const findLesson = useApp((s) => s.findLesson);
   const goDashboard = useApp((s) => s.goDashboard);
   const openLesson = useApp((s) => s.openLesson);
   const nextLesson = useApp((s) => s.nextLesson);
   const prevLesson = useApp((s) => s.prevLesson);
   const toggleComplete = useApp((s) => s.toggleComplete);
+  const { t } = useT();
 
   const [data, setData] = React.useState<LessonResponse | null>(null);
   const [loading, setLoading] = React.useState(true);
@@ -75,32 +79,37 @@ export function LessonReader() {
 
   const meta = lessonId ? findLesson(lessonId) : undefined;
 
-  const load = React.useCallback(async (id: string) => {
-    setLoading(true);
-    setError(null);
-    setData(null);
-    try {
-      const res = await fetch(`/api/lesson?id=${encodeURIComponent(id)}`);
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error || "Failed to load lesson");
+  const load = React.useCallback(
+    async (id: string, lng: Lang) => {
+      setLoading(true);
+      setError(null);
+      setData(null);
+      try {
+        const res = await fetch(
+          `/api/lesson?id=${encodeURIComponent(id)}&lang=${lng}`
+        );
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error(body.error || "Failed to load lesson");
+        }
+        const json: LessonResponse = await res.json();
+        setData(json);
+        setReflection(json.reflection ?? "");
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Unknown error");
+      } finally {
+        setLoading(false);
       }
-      const json: LessonResponse = await res.json();
-      setData(json);
-      setReflection(json.reflection ?? "");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Unknown error");
-    } finally {
-      setLoading(false);
-    }
-    if (typeof window !== "undefined") {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  }, []);
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    },
+    []
+  );
 
   React.useEffect(() => {
-    if (lessonId) load(lessonId);
-  }, [lessonId, load]);
+    if (lessonId) load(lessonId, lang);
+  }, [lessonId, lang, load]);
 
   const scheduleSave = React.useCallback(
     (text: string) => {
@@ -138,7 +147,7 @@ export function LessonReader() {
           className="group inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-0.5" />
-          <span className="hidden sm:inline">Dashboard</span>
+          <span className="hidden sm:inline">{t("nav.dashboard")}</span>
         </button>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <span
@@ -170,7 +179,7 @@ export function LessonReader() {
           <ErrorState
             key="error"
             message={error}
-            onRetry={() => load(lessonId!)}
+            onRetry={() => load(lessonId!, lang)}
           />
         ) : data ? (
           <motion.article
@@ -183,7 +192,7 @@ export function LessonReader() {
             <header className="mb-8">
               <div className="flex flex-wrap items-center gap-2">
                 <p className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-                  Lesson {data.lessonCode}
+                  {t("lesson.lesson")} {data.lessonCode}
                 </p>
                 {/* Contestation status badge — critical review's central rec */}
                 <span
@@ -191,12 +200,12 @@ export function LessonReader() {
                     "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider",
                     statusMeta.badge
                   )}
-                  title={statusMeta.description}
+                  title={t(statusMeta.descKey)}
                 >
                   <span
                     className={cn("h-1.5 w-1.5 rounded-full", statusMeta.dot)}
                   />
-                  {statusMeta.label}
+                  {t(statusMeta.labelKey)}
                 </span>
               </div>
               <h1 className="mt-2 font-display text-3xl font-medium leading-tight tracking-tight sm:text-4xl">
@@ -205,7 +214,7 @@ export function LessonReader() {
               <div className="mt-2 flex items-center gap-2">
                 <BookMarked className="h-3.5 w-3.5 text-muted-foreground" />
                 <p className="text-sm text-muted-foreground">
-                  <span className="text-muted-foreground/70">Key Figures · </span>
+                  <span className="text-muted-foreground/70">{t("lesson.keyFigures")} · </span>
                   {data.keyFigures}
                 </p>
               </div>
@@ -233,7 +242,7 @@ export function LessonReader() {
                 />
                 <div>
                   <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                    Critical reading
+                    {t("lesson.criticalReading")}
                   </p>
                   <p className="prose-reader mt-1 text-sm leading-relaxed text-foreground/90">
                     {data.criticalNote}
@@ -243,7 +252,7 @@ export function LessonReader() {
             )}
 
             {/* Core Claim — the thesis */}
-            <Section icon={Sparkles} label="Core Claim" accentHex={accent.hex}>
+            <Section icon={Sparkles} label={t("lesson.coreClaim")} accentHex={accent.hex}>
               <p className="prose-reader text-lg font-medium leading-relaxed text-foreground">
                 {data.content.coreClaim}
               </p>
@@ -252,9 +261,9 @@ export function LessonReader() {
             {/* Mechanism — reframed as a pointer, not full depth */}
             <Section
               icon={Cpu}
-              label="Mechanism"
+              label={t("lesson.mechanism")}
               accentHex={accent.hex}
-              hint="a pointer — consult primary sources for depth"
+              hint={t("lesson.mechanism.hint")}
             >
               <Prose text={data.content.mechanism} />
             </Section>
@@ -262,9 +271,9 @@ export function LessonReader() {
             {/* Canonical Example */}
             <Section
               icon={FlaskConical}
-              label="Canonical Example"
+              label={t("lesson.canonicalExample")}
               accentHex={accent.hex}
-              hint="post-2020"
+              hint={t("lesson.canonicalExample.hint")}
             >
               <Prose text={data.content.canonicalExample} />
             </Section>
@@ -272,15 +281,15 @@ export function LessonReader() {
             {/* Conceptual Tension */}
             <Section
               icon={Split}
-              label="Conceptual Tension"
+              label={t("lesson.conceptualTension")}
               accentHex={accent.hex}
-              hint={data.status !== "settled" ? "the live debate" : undefined}
+              hint={data.status !== "settled" ? t("lesson.conceptualTension.hint") : undefined}
             >
               <Prose text={data.content.conceptualTension} />
             </Section>
 
             {/* Connection Node */}
-            <Section icon={Link2} label="Connection Node" accentHex={accent.hex}>
+            <Section icon={Link2} label={t("lesson.connectionNode")} accentHex={accent.hex}>
               <Prose
                 text={data.content.connectionNode}
                 onLessonCode={openLesson}
@@ -292,10 +301,10 @@ export function LessonReader() {
               <div className="flex items-center gap-2 border-b border-border/60 px-5 py-3">
                 <Timer className="h-4 w-4" style={{ color: accent.hex }} />
                 <span className="text-[11px] font-medium uppercase tracking-[0.18em]">
-                  Micro-Praxis
+                  {t("lesson.microPraxis")}
                 </span>
                 <span className="ml-auto text-[10px] uppercase tracking-wider text-muted-foreground">
-                  90 seconds
+                  {t("lesson.90seconds")}
                 </span>
               </div>
               <div className="px-5 py-4">
@@ -307,7 +316,7 @@ export function LessonReader() {
             <div className="my-10">
               <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
                 <HelpCircle className="h-3.5 w-3.5" />
-                Zeigarnik Hook
+                {t("lesson.zeigarnikHook")}
               </div>
               <p className="mt-3 font-display text-xl italic leading-relaxed text-foreground/90 sm:text-2xl">
                 {data.content.zeigarnikHook}
@@ -321,11 +330,11 @@ export function LessonReader() {
                   htmlFor="reflection"
                   className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground"
                 >
-                  Private reflection
+                  {t("lesson.privateReflection")}
                 </label>
                 {savingReflection && (
                   <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                    <Loader2 className="h-3 w-3 animate-spin" /> saving
+                    <Loader2 className="h-3 w-3 animate-spin" /> {t("lesson.saving")}
                   </span>
                 )}
               </div>
@@ -336,7 +345,7 @@ export function LessonReader() {
                   setReflection(e.target.value);
                   scheduleSave(e.target.value);
                 }}
-                placeholder="What landed? What resists? What does this make visible that was invisible a moment ago?"
+                placeholder={t("lesson.reflectionPlaceholder")}
                 className="min-h-[100px] resize-y border-0 bg-transparent p-0 text-sm leading-relaxed focus-visible:ring-0"
               />
             </div>
@@ -353,10 +362,10 @@ export function LessonReader() {
                   );
                   toast({
                     title: willComplete
-                      ? "Lesson complete"
-                      : "Marked incomplete",
+                      ? t("lesson.markedComplete")
+                      : t("lesson.markedIncomplete"),
                     description: willComplete
-                      ? `${data.lessonCode} marked as complete.`
+                      ? `${data.lessonCode} ${t("lesson.markedCompleteDesc")}`
                       : undefined,
                   });
                 }}
@@ -368,11 +377,11 @@ export function LessonReader() {
               >
                 {data.completed ? (
                   <>
-                    <Check className="h-4 w-4" /> Completed
+                    <Check className="h-4 w-4" /> {t("lesson.completed")}
                   </>
                 ) : (
                   <>
-                    <Circle className="h-4 w-4" /> Mark complete
+                    <Circle className="h-4 w-4" /> {t("lesson.markComplete")}
                   </>
                 )}
               </Button>
@@ -386,7 +395,7 @@ export function LessonReader() {
                   className="gap-1.5"
                 >
                   <ArrowLeft className="h-4 w-4" />
-                  <span className="hidden sm:inline">Prev</span>
+                  <span className="hidden sm:inline">{t("lesson.prev")}</span>
                 </Button>
                 <Button
                   variant="ghost"
@@ -395,7 +404,7 @@ export function LessonReader() {
                   onClick={() => next && openLesson(next.id)}
                   className="gap-1.5"
                 >
-                  <span className="hidden sm:inline">Next</span>
+                  <span className="hidden sm:inline">{t("lesson.next")}</span>
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </div>
@@ -500,6 +509,7 @@ function ComposingState({
   status: LessonStatus;
 }) {
   const statusMeta = STATUS_META[status];
+  const { t } = useT();
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -515,7 +525,7 @@ function ComposingState({
           </div>
         </div>
         <p className="text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
-          Composing lesson {lessonCode}
+          {t("lesson.composing")} {lessonCode}
         </p>
         <h2 className="mt-2 font-display text-2xl font-medium tracking-tight">
           {concept}
@@ -531,13 +541,11 @@ function ComposingState({
             <span
               className={cn("h-1.5 w-1.5 rounded-full", statusMeta.dot)}
             />
-            {statusMeta.label}
+            {t(statusMeta.labelKey)}
           </span>
         )}
         <p className="mt-6 max-w-sm text-sm leading-relaxed text-muted-foreground">
-          Each session is composed on demand — a pointer to the mechanism, a
-          canonical example, the tension that keeps it alive, and a practice
-          you can do in ninety seconds.
+          {t("lesson.composingBody")}
         </p>
         <div className="mt-8 w-full max-w-md space-y-3">
           {[90, 70, 80, 60].map((w, i) => (
@@ -560,6 +568,7 @@ function ErrorState({
   message: string;
   onRetry: () => void;
 }) {
+  const { t } = useT();
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -569,7 +578,7 @@ function ErrorState({
     >
       <p className="text-sm text-muted-foreground">{message}</p>
       <Button onClick={onRetry} variant="outline" className="mt-4 gap-2">
-        <RotateCw className="h-4 w-4" /> Retry
+        <RotateCw className="h-4 w-4" /> {t("lesson.retry")}
       </Button>
     </motion.div>
   );

@@ -56,3 +56,30 @@ Stage Summary:
 - The LLM composer is now instructed to be honest about depth (Mechanism = pointer) and to foreground live debates in the Conceptual Tension for contested lessons — verified in the composed Polyvagal and Stochastic Parrots outputs.
 - Progress + reflection data preserved across the schema migration via @map aliasing + upsert seeding.
 - Artifacts updated: prisma/schema.prisma, prisma/seed.ts, src/lib/{syllabus,lesson-generator,accents}.ts, src/app/api/{syllabus,lesson}/route.ts, src/components/curriculum/{lesson-reader,dashboard,module-view,atlas,about}.tsx.
+
+---
+Task ID: 3
+Agent: Z.ai Code (main)
+Task: Add Castellano (European Spanish) language support — language toggle, translated UI, translated syllabus metadata, and LLM lesson composition in the selected language.
+
+Work Log:
+- Created src/lib/i18n.ts: Lang type (en|es), comprehensive translation dictionary (~150 keys covering all UI strings), translate() function. Castellano translations use European Spanish vocabulary (ordenador, móvil, etc.) and formal academic register.
+- Created src/hooks/use-t.ts: useT() hook returning {lang, t} from the Zustand store.
+- Refactored src/lib/accents.ts: VECTOR_META and STATUS_META now use translation keys (labelKey, descKey, shortKey) instead of hardcoded English strings, resolved via t() in components.
+- Updated Zustand store (src/store/use-app.ts): added lang state (persisted to localStorage), setLang() (forces syllabus reload in new language), initLang() (reads localStorage on mount), syllabusLang tracking. loadSyllabus() now passes ?lang= to the API.
+- Updated Prisma schema: added *Es columns (titleEs, themeEs, descriptionEs on Module; conceptEs, coreClaimEs, criticalNoteEs on Lesson) for Spanish metadata translations. Changed lesson content storage to per-language JSON {"en"?:..., "es"?:...}.
+- Created prisma/seed-translations.ts: LLM batch translation script that translates module + lesson metadata to Castellano, 1 LLM call per module (8 total). Idempotent — skips already-translated lessons. Ran successfully: 76/76 lessons + 8/8 modules translated.
+- Updated lesson-generator (src/lib/lesson-generator.ts): added lang parameter to LessonContext; system prompt now instructs composing in the target language with Castellano-specific rules (European Spanish vocabulary, preserve scholar names/acronyms); user prompt includes explicit OUTPUT LANGUAGE instruction.
+- Updated API routes: /api/syllabus?lang=en|es returns metadata in the requested language (falling back to English); /api/lesson?id=X&lang=en|es returns + composes content per-language, stored as {"en":...,"es":...} JSON.
+- Updated all UI components (app-shell, dashboard, module-view, lesson-reader, atlas, about, page.tsx): every hardcoded string now uses t(key); language toggle (Languages icon + EN/ES dropdown) added to header; lang passed to all lesson fetches.
+- Fixed a useCallback dependency issue in lesson-reader (removed t from deps to prevent infinite re-fetch loop).
+- Verified with Agent Browser: language toggle appears in header; switching to Castellano translates the entire dashboard (title, subtitle, module names, themes, vectors, guidance cards, acknowledgment); composing a lesson in Spanish produces genuine scholarly Castellano across all 8 sections (Afirmación central, Mecanismo, Ejemplo canónico, Tensión conceptual, Nodo de conexión, Micropráctica, Gancho de Zeigarnik); switching back to English recomposes in English. Both languages cached independently. Lint clean. No errors.
+
+Stage Summary:
+- Full bilingual support (English + Castellano) across the entire platform.
+- Language toggle in header (Languages icon → EN/ES dropdown), preference persisted to localStorage.
+- All UI strings translated (~150 keys). Module/lesson metadata (titles, themes, concepts, core claims, critical notes) translated via LLM batch seed and stored in DB.
+- Lesson content composed on-demand in the selected language, cached per-language in the DB ({"en":...,"es":...}).
+- Castellano uses European Spanish vocabulary and formal academic register; scholar names and technical acronyms preserved untranslated.
+- Progress + reflections shared across languages (language only affects display, not completion state).
+- Artifacts: src/lib/i18n.ts, src/hooks/use-t.ts, src/lib/accents.ts (refactored), src/store/use-app.ts (lang state), prisma/schema.prisma (*Es columns), prisma/seed-translations.ts, src/lib/lesson-generator.ts (lang param), src/app/api/{syllabus,lesson}/route.ts (?lang=), all components in src/components/curriculum/ (t() usage), src/app/page.tsx (initLang).

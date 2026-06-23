@@ -3,17 +3,28 @@
 import * as React from "react";
 import { useApp } from "@/store/use-app";
 import { ThemeToggle } from "./theme-toggle";
-import { Compass, BookOpen, LayoutGrid, Info } from "lucide-react";
+import { Compass, BookOpen, LayoutGrid, Info, Languages } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
+import { useT } from "@/hooks/use-t";
+import { LANGS } from "@/lib/i18n";
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const view = useApp((s) => s.view);
+  const lang = useApp((s) => s.lang);
+  const setLang = useApp((s) => s.setLang);
   const goDashboard = useApp((s) => s.goDashboard);
   const goAtlas = useApp((s) => s.goAtlas);
   const goAbout = useApp((s) => s.goAbout);
   const completed = useApp((s) => s.syllabus?.completed ?? 0);
   const total = useApp((s) => s.syllabus?.totalLessons ?? 0);
+  const { t } = useT();
 
   return (
     <div className="flex min-h-screen flex-col bg-background bg-grain">
@@ -29,10 +40,10 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </span>
             <span className="hidden flex-col leading-none sm:flex">
               <span className="font-display text-[15px] font-medium tracking-tight">
-                Reality&apos;s Architecture
+                {t("site.name")}
               </span>
               <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                A micro-learning curriculum
+                {t("site.subtitle")}
               </span>
             </span>
           </button>
@@ -48,7 +59,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               )}
             >
               <LayoutGrid className="h-4 w-4" strokeWidth={1.5} />
-              <span className="hidden sm:inline">Atlas</span>
+              <span className="hidden sm:inline">{t("nav.atlas")}</span>
             </Button>
             <Button
               variant="ghost"
@@ -60,7 +71,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               )}
             >
               <Info className="h-4 w-4" strokeWidth={1.5} />
-              <span className="hidden sm:inline">About</span>
+              <span className="hidden sm:inline">{t("nav.about")}</span>
             </Button>
             <div className="mx-1 hidden h-5 w-px bg-border sm:block" />
             <div className="hidden items-center gap-1.5 px-2 text-xs text-muted-foreground sm:flex">
@@ -69,6 +80,43 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 {completed}/{total}
               </span>
             </div>
+
+            {/* Language toggle */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="gap-1.5"
+                  aria-label="Change language"
+                >
+                  <Languages className="h-4 w-4" strokeWidth={1.5} />
+                  <span className="text-xs font-medium uppercase">
+                    {lang}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="min-w-[140px]">
+                {LANGS.map((l) => (
+                  <DropdownMenuItem
+                    key={l.code}
+                    onClick={() => setLang(l.code)}
+                    className={cn(
+                      "flex items-center justify-between gap-3",
+                      lang === l.code && "font-medium"
+                    )}
+                  >
+                    {l.label}
+                    {lang === l.code && (
+                      <span className="text-xs text-muted-foreground">
+                        ✓
+                      </span>
+                    )}
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
             <ThemeToggle />
           </nav>
         </div>
@@ -79,13 +127,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <footer className="mt-auto border-t border-border/60 bg-background/60">
         <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
           <div className="flex flex-col items-start justify-between gap-3 text-xs text-muted-foreground sm:flex-row sm:items-center">
-            <p className="max-w-xl leading-relaxed">
-              Seventy-six lessons. Four integrated vectors. No single framework
-              privileged. Composed on demand — each session generated for you,
-              then held in memory.
-            </p>
+            <p className="max-w-xl leading-relaxed">{t("footer.text")}</p>
             <p className="font-mono text-[10px] uppercase tracking-[0.18em]">
-              Definitive Edition v3.0
+              {t("footer.edition")}
             </p>
           </div>
         </div>

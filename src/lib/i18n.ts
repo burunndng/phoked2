@@ -20,7 +20,7 @@ const en: Dict = {
   "nav.about": "About",
   "nav.dashboard": "Dashboard",
   "footer.text":
-    "Seventy-six lessons. Four integrated vectors. No single framework privileged. Composed on demand — each session generated for you, then held in memory.",
+    "Seventy-six lessons. Four integrated vectors. No single framework privileged. Pre-written, then held in memory — each session ready when you are.",
   "footer.edition": "Definitive Edition v3.0",
 
   // ── Boot states ───────────────────────────────────────────
@@ -135,9 +135,9 @@ const en: Dict = {
   "lesson.markedCompleteDesc": "marked as complete.",
   "lesson.prev": "Prev",
   "lesson.next": "Next",
-  "lesson.composing": "Composing lesson",
+  "lesson.composing": "Loading lesson",
   "lesson.composingBody":
-    "Each session is composed on demand — a pointer to the mechanism, a canonical example, the tension that keeps it alive, and a practice you can do in ninety seconds.",
+    "Each session is pre-written — a pointer to the mechanism, a canonical example, the tension that keeps it alive, and a practice you can do in ninety seconds.",
   "lesson.retry": "Retry",
   "lesson.failed": "Failed to compose lesson. Please retry.",
 
@@ -231,7 +231,7 @@ const es: Dict = {
   "nav.about": "Acerca de",
   "nav.dashboard": "Panel",
   "footer.text":
-    "Setenta y seis lecciones. Cuatro vectores integrados. Ningún marco de síntesis privilegiado. Compuestas bajo demanda — cada sesión generada para ti, luego conservada en memoria.",
+    "Setenta y seis lecciones. Cuatro vectores integrados. Ningún marco de síntesis privilegiado. Pre-escritas y conservadas en memoria — cada sesión lista cuando tú lo estés.",
   "footer.edition": "Edición definitiva v3.0",
 
   // ── Estados de carga ──────────────────────────────────────
@@ -346,9 +346,9 @@ const es: Dict = {
   "lesson.markedCompleteDesc": "marcada como completada.",
   "lesson.prev": "Anterior",
   "lesson.next": "Siguiente",
-  "lesson.composing": "Componiendo la lección",
+  "lesson.composing": "Cargando la lección",
   "lesson.composingBody":
-    "Cada sesión se compone bajo demanda — un indicador del mecanismo, un ejemplo canónico, la tensión que la mantiene viva, y una práctica que puedes hacer en noventa segundos.",
+    "Cada sesión está pre-escrita — un indicador del mecanismo, un ejemplo canónico, la tensión que la mantiene viva, y una práctica que puedes hacer en noventa segundos.",
   "lesson.retry": "Reintentar",
   "lesson.failed": "No se pudo componer la lección. Reinténtalo.",
 

@@ -1,15 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { LESSON_CONTENT } from "@/lib/lesson-content";
 import type { Lang } from "@/lib/i18n";
-import type { LessonContent } from "@/lib/lesson-generator";
 
 function pickLang(searchParams: URLSearchParams): Lang {
   return searchParams.get("lang") === "es" ? "es" : "en";
-}
-
-interface ContentStore {
-  en?: LessonContent;
-  es?: LessonContent;
 }
 
 // Parse lesson-code references (e.g. "3.2", "7.1") from a text field.
@@ -53,8 +48,9 @@ interface GraphEdge {
 // GET /api/graph?lang=en|es
 // Returns the full knowledge graph: 76 nodes + edges.
 // Edges come from two sources:
-//   1. "reference" — lesson codes parsed from generated connectionNode text
-//   2. "sequence" — the linear reading order (each lesson → the next)
+//   1. "reference" — lesson codes parsed from the pre-written connectionNode
+//      text (sourced from LESSON_CONTENT, not the DB content field).
+//   2. "sequence" — the linear reading order (each lesson → the next).
 export async function GET(req: NextRequest) {
   const lang = pickLang(req.nextUrl.searchParams);
 
@@ -80,7 +76,6 @@ export async function GET(req: NextRequest) {
     lessonCode: string;
     moduleNumber: number;
     globalOrder: number;
-    content: string | null;
   }[] = [];
 
   for (const m of modules) {
@@ -101,14 +96,13 @@ export async function GET(req: NextRequest) {
         vector: l.vector,
         status: l.status,
         completed: !!l.progress?.completed,
-        hasContent: !!l.content,
+        hasContent: !!LESSON_CONTENT[l.lessonCode],
       });
       flatLessons.push({
         id: l.id,
         lessonCode: l.lessonCode,
         moduleNumber: m.number,
         globalOrder: l.globalOrder,
-        content: l.content,
       });
     }
   }
@@ -140,19 +134,13 @@ export async function GET(req: NextRequest) {
     });
   };
 
-  // 1. Parse reference edges from generated connectionNode content.
+  // 1. Parse reference edges from the pre-written connectionNode content.
   for (const l of flatLessons) {
-    if (!l.content) continue;
-    try {
-      const store = JSON.parse(l.content) as ContentStore;
-      const content = store[lang] ?? store.en;
-      if (!content?.connectionNode) continue;
-      const codes = extractLessonCodes(content.connectionNode);
-      for (const code of codes) {
-        addEdge(l.id, l.lessonCode, code);
-      }
-    } catch {
-      // malformed content — skip
+    const content = LESSON_CONTENT[l.lessonCode];
+    if (!content?.connectionNode) continue;
+    const codes = extractLessonCodes(content.connectionNode);
+    for (const code of codes) {
+      addEdge(l.id, l.lessonCode, code);
     }
   }
 

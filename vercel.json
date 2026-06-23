@@ -1,0 +1,15 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "buildCommand": "bun run vercel-build",
+  "installCommand": "bun install",
+  "framework": "nextjs",
+  "outputDirectory": ".next",
+  "env": {
+    "DATABASE_URL": "file:./db/custom.db"
+  },
+  "build": {
+    "env": {
+      "DATABASE_URL": "file:./db/custom.db"
+    }
+  }
+}

@@ -19,6 +19,16 @@ node_modules
 
 # production
 /build
+/dist/
+
+# database (SQLite files are local/dev only; Vercel uses env-configured DB)
+db/*.db
+prisma/db/
+
+# local tooling / debug artifacts
+tool-results/
+.opencode/
+opencode.jsonc
 
 # misc
 .DS_Store
@@ -32,6 +42,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel

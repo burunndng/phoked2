@@ -1,26 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import {
-  generateLessonContent,
-  type LessonContent,
-  type LessonStatus,
-} from "@/lib/lesson-generator";
+import { LESSON_CONTENT } from "@/lib/lesson-content";
+import type { LessonStatus } from "@/lib/lesson-generator";
 import type { Lang } from "@/lib/i18n";
 
 function pickLang(searchParams: URLSearchParams): Lang {
   return searchParams.get("lang") === "es" ? "es" : "en";
 }
 
-// Content is stored as JSON: {"en"?: LessonContent, "es"?: LessonContent}
-interface ContentStore {
-  en?: LessonContent;
-  es?: LessonContent;
-}
-
 // GET /api/lesson?id=<lessonId>&lang=en|es
-// Returns the lesson with its full composed content in the requested language.
-// If content in that language has not been generated yet, composes on-demand
-// via the LLM and caches it.
+// Returns the lesson with its full pre-written content.
+// Content is now sourced from the static LESSON_CONTENT map (no LLM).
+// The DB is used only for metadata (concept, keyFigures, etc., with ES fallback)
+// and for per-learner progress + private reflection.
 export async function GET(req: NextRequest) {
   const id = req.nextUrl.searchParams.get("id");
   if (!id) {
@@ -41,6 +33,7 @@ export async function GET(req: NextRequest) {
   }
 
   // Resolve metadata in the requested language (fall back to English).
+  // (ES metadata is seeded by prisma/seed-translations.ts when available.)
   const concept =
     lang === "es" && lesson.conceptEs ? lesson.conceptEs : lesson.concept;
   const coreClaim =
@@ -80,71 +73,15 @@ export async function GET(req: NextRequest) {
     lang,
   };
 
-  // Parse stored content (now a per-language JSON store).
-  let store: ContentStore = {};
-  if (lesson.content) {
-    try {
-      store = JSON.parse(lesson.content) as ContentStore;
-    } catch {
-      store = {};
-    }
-  }
-
-  // If content already cached in this language, return it.
-  if (store[lang]) {
-    return NextResponse.json({ ...base, content: store[lang] });
-  }
-
-  // Gather prior lessons for cross-referencing (globalOrder < current).
-  // Use the requested language for prior lesson concepts.
-  const priorLessons = await db.lesson.findMany({
-    where: { globalOrder: { lt: lesson.globalOrder } },
-    orderBy: { globalOrder: "asc" },
-    select: {
-      lessonCode: true,
-      concept: true,
-      conceptEs: true,
-      keyFigures: true,
-    },
-  });
-
-  // Compose via LLM in the requested language.
-  try {
-    const content = await generateLessonContent({
-      lessonCode: lesson.lessonCode,
-      concept,
-      keyFigures: lesson.keyFigures,
-      coreClaim,
-      vector: lesson.vector,
-      status: lesson.status as LessonStatus,
-      criticalNote,
-      moduleTitle,
-      moduleTheme,
-      lang,
-      priorLessons: priorLessons.map((p) => ({
-        lessonCode: p.lessonCode,
-        concept:
-          lang === "es" && p.conceptEs ? p.conceptEs : p.concept,
-        keyFigures: p.keyFigures,
-      })),
-    });
-
-    // Merge the new language into the stored content.
-    const newStore: ContentStore = { ...store, [lang]: content };
-    await db.lesson.update({
-      where: { id: lesson.id },
-      data: {
-        content: JSON.stringify(newStore),
-        generatedAt: new Date(),
-      },
-    });
-
-    return NextResponse.json({ ...base, content });
-  } catch (err) {
-    console.error("Lesson generation failed:", err);
+  // Static content is English-authored. For ES, fall back to the English
+  // content (metadata is still translated) until a translation pass exists.
+  const content = LESSON_CONTENT[lesson.lessonCode];
+  if (!content) {
     return NextResponse.json(
-      { error: "Failed to compose lesson. Please retry." },
-      { status: 502 }
+      { error: "No pre-written content for this lesson." },
+      { status: 404 }
     );
   }
+
+  return NextResponse.json({ ...base, content });
 }

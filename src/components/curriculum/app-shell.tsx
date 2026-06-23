@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useApp } from "@/store/use-app";
 import { ThemeToggle } from "./theme-toggle";
-import { Compass, BookOpen, LayoutGrid, Info, Languages } from "lucide-react";
+import { Compass, BookOpen, LayoutGrid, Info, Languages, Share2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -21,6 +21,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const setLang = useApp((s) => s.setLang);
   const goDashboard = useApp((s) => s.goDashboard);
   const goAtlas = useApp((s) => s.goAtlas);
+  const goGraph = useApp((s) => s.goGraph);
   const goAbout = useApp((s) => s.goAbout);
   const completed = useApp((s) => s.syllabus?.completed ?? 0);
   const total = useApp((s) => s.syllabus?.totalLessons ?? 0);
@@ -60,6 +61,18 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             >
               <LayoutGrid className="h-4 w-4" strokeWidth={1.5} />
               <span className="hidden sm:inline">{t("nav.atlas")}</span>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={goGraph}
+              className={cn(
+                "gap-1.5 text-muted-foreground",
+                view === "graph" && "text-foreground"
+              )}
+            >
+              <Share2 className="h-4 w-4" strokeWidth={1.5} />
+              <span className="hidden sm:inline">{t("nav.graph")}</span>
             </Button>
             <Button
               variant="ghost"

@@ -204,6 +204,23 @@ const en: Dict = {
   "status.actively-debated.label": "Actively Debated",
   "status.actively-debated.desc":
     "The framing itself is live-disputed. Do not treat the core claim as consensus.",
+
+  // ── Knowledge graph ───────────────────────────────────────
+  "nav.graph": "Graph",
+  "graph.eyebrow": "The Knowledge Graph",
+  "graph.title": "Seventy-six nodes, one architecture",
+  "graph.desc":
+    "Every lesson is a node. Every cross-reference is an edge. The structure that emerges is the curriculum's actual architecture — not a list, but a network. Solid lines are the reading sequence; glowing lines are cross-references between lessons. Hover to trace a connection. Click to read.",
+  "graph.legend.sequence": "reading sequence",
+  "graph.legend.reference": "cross-reference",
+  "graph.legend.completed": "completed",
+  "graph.legend.contested": "contested",
+  "graph.legend.debated": "actively debated",
+  "graph.hint": "Drag nodes · Scroll to zoom · Click to read",
+  "graph.empty": "No lessons generated yet. Open a lesson to populate the graph with cross-references.",
+  "graph.stats.nodes": "nodes",
+  "graph.stats.refs": "cross-references",
+  "graph.loading": "Building the graph…",
 };
 
 const es: Dict = {
@@ -398,6 +415,23 @@ const es: Dict = {
   "status.actively-debated.label": "Activamente debatido",
   "status.actively-debated.desc":
     "El propio encuadre está en disputa vigente. No trates la afirmación central como consenso.",
+
+  // ── Grafo de conocimiento ─────────────────────────────────
+  "nav.graph": "Grafo",
+  "graph.eyebrow": "El grafo de conocimiento",
+  "graph.title": "Setenta y seis nodos, una arquitectura",
+  "graph.desc":
+    "Cada lección es un nodo. Cada referencia cruzada es un enlace. La estructura que emerge es la arquitectura real del plan — no una lista, sino una red. Las líneas sólidas son la secuencia de lectura; las líneas brillantes son referencias cruzadas entre lecciones. Pasa el cursor para trazar una conexión. Haz clic para leer.",
+  "graph.legend.sequence": "secuencia de lectura",
+  "graph.legend.reference": "referencia cruzada",
+  "graph.legend.completed": "completado",
+  "graph.legend.contested": "controvertido",
+  "graph.legend.debated": "activamente debatido",
+  "graph.hint": "Arrastra los nodos · Rueda para zoom · Clic para leer",
+  "graph.empty": "Aún no hay lecciones generadas. Abre una lección para poblar el grafo con referencias cruzadas.",
+  "graph.stats.nodes": "nodos",
+  "graph.stats.refs": "referencias cruzadas",
+  "graph.loading": "Construyendo el grafo…",
 };
 
 const DICTS: Record<Lang, Dict> = { en, es };

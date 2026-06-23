@@ -83,3 +83,26 @@ Stage Summary:
 - Castellano uses European Spanish vocabulary and formal academic register; scholar names and technical acronyms preserved untranslated.
 - Progress + reflections shared across languages (language only affects display, not completion state).
 - Artifacts: src/lib/i18n.ts, src/hooks/use-t.ts, src/lib/accents.ts (refactored), src/store/use-app.ts (lang state), prisma/schema.prisma (*Es columns), prisma/seed-translations.ts, src/lib/lesson-generator.ts (lang param), src/app/api/{syllabus,lesson}/route.ts (?lang=), all components in src/components/curriculum/ (t() usage), src/app/page.tsx (initLang).
+
+---
+Task ID: 4
+Agent: Z.ai Code (main)
+Task: Add a full knowledge graph tab showing all 76 lessons as nodes with cross-reference and sequence edges, using an interactive force-directed layout.
+
+Work Log:
+- Installed d3-force + @types/d3-force for the physics simulation.
+- Created /api/graph route: returns 76 nodes (lessons with metadata) + edges from two sources: (1) "reference" edges parsed from generated connectionNode text via regex (lesson codes like "3.2"), (2) "sequence" edges connecting each lesson to the next in reading order. Supports ?lang= for bilingual node concepts.
+- Created GraphView component: force-directed SVG graph with d3-force simulation (forceLink, forceManyBody, forceCenter, forceCollide, forceX/Y for module clustering). Features: nodes colored by module accent, dashed status rings for contested/actively-debated lessons, filled circles for completed lessons, lesson-code labels. Edges: solid amber for cross-references (with glow filter), thin gray for sequence. Interactive: hover highlights connected nodes/edges + dims others + shows tooltip with concept; click opens the lesson reader; drag to pan; scroll to zoom (toward cursor). Throttled React state updates (every 2 ticks) for smooth 60fps.
+- Fixed simulation lifecycle: uses sizeRef (not size state) in dependencies so the simulation doesn't restart on container resize; sets initial node positions immediately for instant render; module clustering via forceX/forceY toward 8 angular positions.
+- Added i18n strings for graph view (en + es): nav.graph, graph.eyebrow, graph.title, graph.desc, graph.legend.*, graph.hint, graph.stats.*, graph.loading.
+- Added "Graph" tab (Share2 icon) to the app-shell header navigation between Atlas and About. Updated store with goGraph() action and "graph" view type. Wired into page.tsx router.
+- Verified with Agent Browser: graph tab appears in nav; 76 nodes render in a force-directed layout clustered by module; sequence edges form the reading-order backbone; reference edges glow; hover shows tooltip with concept + highlights connected nodes; click opens the lesson reader; pan/zoom works; graph re-renders in Castellano when language switched (node concepts, title, description, legend all translated). Lint clean. No runtime errors.
+
+Stage Summary:
+- New "Graph" tab with a full interactive knowledge graph of all 76 lessons.
+- Two edge types: cross-references (parsed from generated lesson content, amber glowing lines) and reading sequence (thin gray lines). The graph grows richer as more lessons are composed — each newly-generated lesson's connectionNode references are parsed and added as edges.
+- Nodes: colored by module accent (8 hues), with dashed amber/red rings for contested/actively-debated lessons, filled circles for completed lessons. Sized slightly larger for generated lessons.
+- Full interactivity: hover (highlight + tooltip + dim unconnected), click (open lesson), drag (pan), scroll (zoom toward cursor).
+- Force-directed layout with module clustering (8 angular positions), collision detection, and throttled updates for smooth animation.
+- Fully bilingual (EN/ES) — node concepts, title, description, legend, hint all translated.
+- Artifacts: src/app/api/graph/route.ts, src/components/curriculum/graph-view.tsx, updated src/lib/i18n.ts (graph strings), src/store/use-app.ts (goGraph), src/components/curriculum/app-shell.tsx (Graph tab), src/app/page.tsx (router).

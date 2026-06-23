@@ -7,6 +7,7 @@ import { Dashboard } from "@/components/curriculum/dashboard";
 import { ModuleView } from "@/components/curriculum/module-view";
 import { LessonReader } from "@/components/curriculum/lesson-reader";
 import { Atlas } from "@/components/curriculum/atlas";
+import { GraphView } from "@/components/curriculum/graph-view";
 import { About } from "@/components/curriculum/about";
 import { AnimatePresence, motion } from "framer-motion";
 import { useT } from "@/hooks/use-t";
@@ -56,6 +57,7 @@ export default function Home() {
               {view === "module" && <ModuleView />}
               {view === "lesson" && <LessonReader />}
               {view === "atlas" && <Atlas />}
+              {view === "graph" && <GraphView />}
               {view === "about" && <About />}
             </>
           ) : null}

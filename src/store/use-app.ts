@@ -4,7 +4,7 @@ import { create } from "zustand";
 import type { SyllabusData, ModuleMeta, LessonMeta } from "@/lib/accents";
 import type { Lang } from "@/lib/i18n";
 
-export type View = "dashboard" | "module" | "lesson" | "atlas" | "about";
+export type View = "dashboard" | "module" | "lesson" | "atlas" | "graph" | "about";
 
 const LANG_KEY = "ra:lang";
 
@@ -31,6 +31,7 @@ interface AppState {
   // navigation
   goDashboard: () => void;
   goAtlas: () => void;
+  goGraph: () => void;
   goAbout: () => void;
   openModule: (moduleId: string) => void;
   openLesson: (lessonId: string) => void;
@@ -67,6 +68,7 @@ export const useApp = create<AppState>((set, get) => ({
 
   goDashboard: () => set({ view: "dashboard" }),
   goAtlas: () => set({ view: "atlas" }),
+  goGraph: () => set({ view: "graph" }),
   goAbout: () => set({ view: "about" }),
 
   openModule: (moduleId) => set({ view: "module", activeModuleId: moduleId }),

@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import type { SyllabusData, ModuleMeta, LessonMeta } from "@/lib/accents";
 import type { Lang } from "@/lib/i18n";
+import { getCompleted, setCompleted } from "@/lib/progress";
 
 export type View = "dashboard" | "module" | "lesson" | "atlas" | "graph" | "about";
 
@@ -18,17 +19,30 @@ function readStoredLang(): Lang {
   }
 }
 
+// Hydrate the syllabus's completed flags from localStorage.
+function hydrateProgress(data: SyllabusData): SyllabusData {
+  const done = getCompleted();
+  const modules = data.modules.map((m) => ({
+    ...m,
+    lessons: m.lessons.map((l) => ({ ...l, completed: done.has(l.id) })),
+  }));
+  const completedCount = modules.reduce(
+    (n, m) => n + m.lessons.filter((l) => l.completed).length,
+    0
+  );
+  return { ...data, modules, completed: completedCount };
+}
+
 interface AppState {
   view: View;
   activeModuleId: string | null;
   activeLessonId: string | null;
   syllabus: SyllabusData | null;
-  syllabusLang: Lang | null; // which lang the loaded syllabus is in
+  syllabusLang: Lang | null;
   syllabusLoading: boolean;
   syllabusError: string | null;
   lang: Lang;
 
-  // navigation
   goDashboard: () => void;
   goAtlas: () => void;
   goGraph: () => void;
@@ -36,17 +50,13 @@ interface AppState {
   openModule: (moduleId: string) => void;
   openLesson: (lessonId: string) => void;
 
-  // language
   setLang: (lang: Lang) => void;
   initLang: () => void;
 
-  // data
   loadSyllabus: () => Promise<void>;
 
-  // progress
-  toggleComplete: (lessonId: string, completed: boolean) => Promise<void>;
+  toggleComplete: (lessonId: string, completed: boolean) => void;
 
-  // helpers
   findModule: (moduleId: string) => ModuleMeta | undefined;
   findLesson: (
     lessonId: string
@@ -72,7 +82,6 @@ export const useApp = create<AppState>((set, get) => ({
   goAbout: () => set({ view: "about" }),
 
   openModule: (moduleId) => set({ view: "module", activeModuleId: moduleId }),
-
   openLesson: (lessonId) => set({ view: "lesson", activeLessonId: lessonId }),
 
   setLang: (lang) => {
@@ -84,7 +93,6 @@ export const useApp = create<AppState>((set, get) => ({
         /* ignore */
       }
     }
-    // force syllabus reload in the new language
     get().loadSyllabus();
   },
 
@@ -102,7 +110,8 @@ export const useApp = create<AppState>((set, get) => ({
       const res = await fetch(`/api/syllabus?lang=${lang}`);
       if (!res.ok) throw new Error("Failed to load syllabus");
       const data: SyllabusData = await res.json();
-      set({ syllabus: data, syllabusLang: lang, syllabusLoading: false });
+      // Hydrate completion from localStorage before setting state.
+      set({ syllabus: hydrateProgress(data), syllabusLang: lang, syllabusLoading: false });
     } catch (e) {
       set({
         syllabusLoading: false,
@@ -111,8 +120,9 @@ export const useApp = create<AppState>((set, get) => ({
     }
   },
 
-  toggleComplete: async (lessonId, completed) => {
-    // optimistic
+  toggleComplete: (lessonId, completed) => {
+    // Persist to localStorage + update state optimistically (no server call).
+    setCompleted(lessonId, completed);
     const prev = get().syllabus;
     if (prev) {
       const modules = prev.modules.map((m) => ({
@@ -126,16 +136,6 @@ export const useApp = create<AppState>((set, get) => ({
         0
       );
       set({ syllabus: { ...prev, modules, completed: completedCount } });
-    }
-    try {
-      await fetch("/api/progress", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lessonId, completed }),
-      });
-    } catch {
-      // revert on failure
-      if (prev) set({ syllabus: prev });
     }
   },
 

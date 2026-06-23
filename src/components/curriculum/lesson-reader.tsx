@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useT } from "@/hooks/use-t";
 import type { Lang } from "@/lib/i18n";
+import { getReflection, setReflection } from "@/lib/progress";
 
 interface LessonResponse {
   id: string;
@@ -93,8 +94,12 @@ export function LessonReader() {
           throw new Error(body.error || "Failed to load lesson");
         }
         const json: LessonResponse = await res.json();
+        // Sync completed status from the store (hydrated from localStorage).
+        const meta = findLesson(id);
+        json.completed = !!meta?.lesson.completed;
         setData(json);
-        setReflection(json.reflection ?? "");
+        // Reflection now lives in localStorage (client-side).
+        setReflection(getReflection(id));
       } catch (e) {
         setError(e instanceof Error ? e.message : "Unknown error");
       } finally {
@@ -115,18 +120,13 @@ export function LessonReader() {
     (text: string) => {
       if (!lessonId) return;
       if (reflectionTimer.current) clearTimeout(reflectionTimer.current);
-      reflectionTimer.current = setTimeout(async () => {
+      reflectionTimer.current = setTimeout(() => {
         setSavingReflection(true);
-        try {
-          await fetch("/api/reflect", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ lessonId, reflection: text }),
-          });
-        } finally {
-          setSavingReflection(false);
-        }
-      }, 900);
+        // Save to localStorage (no server call needed).
+        setReflection(lessonId, text);
+        // Brief "saving" indicator for UX feedback.
+        setTimeout(() => setSavingReflection(false), 300);
+      }, 400);
     },
     [lessonId]
   );

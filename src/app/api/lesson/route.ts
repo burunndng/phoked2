@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { SYLLABUS } from "@/lib/syllabus";
-import { LESSON_CONTENT } from "@/lib/lesson-content";
+import { getSyllabus } from "@/lib/syllabus-i18n";
+import { getLessonContent } from "@/lib/lesson-i18n";
 import type { LessonStatus } from "@/lib/syllabus";
 import type { Lang } from "@/lib/i18n";
 
@@ -16,7 +16,8 @@ function moduleId(moduleNumber: number): string {
 }
 
 // GET /api/lesson?id=<lessonId>&lang=en|es
-// DB-free: metadata from SYLLABUS, content from LESSON_CONTENT.
+// DB-free: metadata from the (optionally Castellano) syllabus, content from
+// LESSON_CONTENT or LESSON_CONTENT_ES depending on lang.
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const id = url.searchParams.get("id");
@@ -24,13 +25,14 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Missing id" }, { status: 400 });
   }
   const lang = pickLang(url.searchParams);
+  const syllabus = getSyllabus(lang);
 
   // Find the lesson in the static syllabus by its deterministic ID.
   let found:
-    | { module: (typeof SYLLABUS)[number]; lesson: (typeof SYLLABUS)[number]["lessons"][number] }
+    | { module: (typeof syllabus)[number]; lesson: (typeof syllabus)[number]["lessons"][number] }
     | null = null;
 
-  for (const m of SYLLABUS) {
+  for (const m of syllabus) {
     for (const l of m.lessons) {
       if (lessonId(m.number, l.number) === id) {
         found = { module: m, lesson: l };
@@ -45,7 +47,7 @@ export async function GET(req: Request) {
   }
 
   const { module: m, lesson: l } = found;
-  const content = LESSON_CONTENT[l.lessonCode];
+  const content = getLessonContent(l.lessonCode, lang);
   if (!content) {
     return NextResponse.json(
       { error: "No pre-written content for this lesson." },

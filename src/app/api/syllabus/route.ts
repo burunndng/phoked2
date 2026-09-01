@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { SYLLABUS } from "@/lib/syllabus";
+import { getSyllabus } from "@/lib/syllabus-i18n";
+import { hasLessonContent } from "@/lib/lesson-i18n";
 import type { Lang } from "@/lib/i18n";
 
 function pickLang(searchParams: URLSearchParams): Lang {
@@ -16,20 +17,21 @@ function moduleId(moduleNumber: number): string {
 }
 
 // GET /api/syllabus?lang=en|es — full curriculum map.
-// DB-free: all metadata comes from the static SYLLABUS constant.
-// (Spanish translations are applied if/when seeded; for now, ES falls back
-// to English metadata for module/lesson fields.)
+// DB-free: metadata comes from the static SYLLABUS constant, overlaid with
+// the Castellano translations in src/lib/syllabus-es.ts when lang=es
+// (falling back to English for anything not yet translated).
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const lang = pickLang(url.searchParams);
 
-  const totalLessons = SYLLABUS.reduce((n, m) => n + m.lessons.length, 0);
+  const syllabus = getSyllabus(lang);
+  const totalLessons = syllabus.reduce((n, m) => n + m.lessons.length, 0);
 
   return NextResponse.json({
     totalLessons,
     completed: 0, // progress is client-side (localStorage) now
     lang,
-    modules: SYLLABUS.map((m) => ({
+    modules: syllabus.map((m) => ({
       id: moduleId(m.number),
       number: m.number,
       title: m.title,
@@ -47,7 +49,7 @@ export async function GET(req: Request) {
         vector: l.vector,
         status: l.status,
         criticalNote: l.criticalNote ?? null,
-        hasContent: true,
+        hasContent: hasLessonContent(l.lessonCode, lang),
         completed: false, // client-side
       })),
     })),

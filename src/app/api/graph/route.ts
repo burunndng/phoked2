@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { SYLLABUS } from "@/lib/syllabus";
-import { LESSON_CONTENT } from "@/lib/lesson-content";
+import { getSyllabus } from "@/lib/syllabus-i18n";
+import { getLessonContent } from "@/lib/lesson-i18n";
 import type { Lang } from "@/lib/i18n";
 
 function pickLang(searchParams: URLSearchParams): Lang {
@@ -49,10 +49,13 @@ interface GraphEdge {
 }
 
 // GET /api/graph?lang=en|es
-// DB-free: nodes from SYLLABUS, reference edges from LESSON_CONTENT.
+// DB-free: nodes from the (optionally Castellano) syllabus; reference edges
+// from connectionNode text in whichever language is requested. Lesson codes
+// are identical in both languages, so the edge set is language-independent.
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const lang = pickLang(url.searchParams);
+  const syllabus = getSyllabus(lang);
 
   // Flatten all lessons with stable IDs.
   const flat: {
@@ -68,7 +71,7 @@ export async function GET(req: Request) {
 
   const byCode = new Map<string, { id: string; lessonCode: string }>();
 
-  for (const m of SYLLABUS) {
+  for (const m of syllabus) {
     for (const l of m.lessons) {
       const id = lessonId(m.number, l.number);
       flat.push({
@@ -90,7 +93,7 @@ export async function GET(req: Request) {
   const nodes: GraphNode[] = flat.map((l) => ({
     ...l,
     completed: false, // client-side
-    hasContent: !!LESSON_CONTENT[l.lessonCode],
+    hasContent: !!getLessonContent(l.lessonCode, lang),
   }));
 
   const edges: GraphEdge[] = [];
@@ -117,7 +120,7 @@ export async function GET(req: Request) {
 
   // 1. Reference edges from pre-written connectionNode content.
   for (const l of flat) {
-    const content = LESSON_CONTENT[l.lessonCode];
+    const content = getLessonContent(l.lessonCode, lang);
     if (!content?.connectionNode) continue;
     for (const code of extractLessonCodes(content.connectionNode)) {
       addEdge(l.id, l.lessonCode, code);

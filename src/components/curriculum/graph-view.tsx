@@ -6,7 +6,7 @@ import * as d3force from "d3-force";
 import { useApp } from "@/store/use-app";
 import { getAccent, ACCENTS, type Accent } from "@/lib/accents";
 import { useT } from "@/hooks/use-t";
-import { ArrowLeft, Share2, Move, ZoomIn, Eye } from "lucide-react";
+import { ArrowLeft, Share2, Move, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ── Types ──────────────────────────────────────────────────
@@ -61,7 +61,9 @@ export function GraphView() {
   const [data, setData] = React.useState<GraphData | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [hovered, setHovered] = React.useState<string | null>(null);
+  const [focused, setFocused] = React.useState<string | null>(null);
   const containerRef = React.useRef<HTMLDivElement>(null);
+  const svgRef = React.useRef<SVGSVGElement>(null);
   const [size, setSize] = React.useState({ w: 800, h: 600 });
 
   // SVG pan/zoom transform
@@ -206,20 +208,36 @@ export function GraphView() {
   }, [data]);
 
   // ── Pan & zoom handlers ──────────────────────────────────
-  const onWheel = React.useCallback((e: React.WheelEvent) => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? 0.9 : 1.1;
+  // Stable zoom helper shared by the non-passive wheel listener below and
+  // the explicit zoom controls. Zooms toward (cx, cy) in container
+  // coordinates, defaulting to the viewport center.
+  const zoomBy = React.useCallback((delta: number, cx?: number, cy?: number) => {
     setTransform((prev) => {
       const k = Math.max(0.3, Math.min(3, prev.k * delta));
-      // zoom toward cursor
-      const rect = e.currentTarget.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
-      const my = e.clientY - rect.top;
+      const mx = cx ?? sizeRef.current.w / 2;
+      const my = cy ?? sizeRef.current.h / 2;
       const nx = mx - (mx - prev.x) * (k / prev.k);
       const ny = my - (my - prev.y) * (k / prev.k);
       return { x: nx, y: ny, k };
     });
   }, []);
+
+  // React 17+ registers wheel listeners as PASSIVE at the root, so
+  // e.preventDefault() inside a synthetic onWheel is a no-op — the page
+  // scrolled while the user tried to zoom. Attach a native listener with
+  // { passive: false } so preventDefault actually works.
+  React.useEffect(() => {
+    const el = svgRef.current;
+    if (!el) return;
+    const handler = (e: WheelEvent) => {
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? 0.9 : 1.1;
+      const rect = el.getBoundingClientRect();
+      zoomBy(delta, e.clientX - rect.left, e.clientY - rect.top);
+    };
+    el.addEventListener("wheel", handler, { passive: false });
+    return () => el.removeEventListener("wheel", handler);
+  }, [zoomBy]);
 
   const onPointerDown = React.useCallback((e: React.PointerEvent) => {
     if (e.button !== 0) return;
@@ -322,10 +340,10 @@ export function GraphView() {
         style={{ touchAction: "none" }}
       >
         <svg
+          ref={svgRef}
           width={size.w}
           height={size.h}
           className="absolute inset-0 cursor-grab active:cursor-grabbing"
-          onWheel={onWheel}
           onPointerDown={onPointerDown}
           onPointerMove={onPointerMove}
           onPointerUp={onPointerUp}
@@ -406,19 +424,50 @@ export function GraphView() {
               return (
                 <g
                   key={n.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${n.lessonCode} — ${n.concept}, M${n.moduleNumber}${
+                    n.completed ? ` (${t("graph.legend.completed")})` : ""
+                  }`}
                   transform={`translate(${n.x},${n.y})`}
                   style={{
                     cursor: "pointer",
                     opacity: isDimmed ? 0.2 : 1,
                     transition: "opacity 0.2s",
+                    outline: "none",
                   }}
                   onMouseEnter={() => setHovered(n.id)}
                   onMouseLeave={() => setHovered(null)}
+                  onFocus={() => {
+                    setHovered(n.id);
+                    setFocused(n.id);
+                  }}
+                  onBlur={() => {
+                    setHovered(null);
+                    setFocused(null);
+                  }}
                   onClick={(e) => {
                     e.stopPropagation();
                     openLesson(n.id);
                   }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      openLesson(n.id);
+                    }
+                  }}
                 >
+                  {/* focus ring for keyboard navigation */}
+                  {focused === n.id && (
+                    <circle
+                      r={r + 9}
+                      fill="none"
+                      stroke={accent.hex}
+                      strokeWidth={2.5}
+                      strokeOpacity={0.9}
+                    />
+                  )}
                   {/* glow ring for hovered/connected */}
                   {(isHovered || (isConnected && hovered)) && (
                     <circle
@@ -496,6 +545,37 @@ export function GraphView() {
               </div>
             );
           })()}
+
+        {/* Zoom controls — wheel zoom is mouse-only; these give touch and
+            keyboard users a working zoom/reset path. */}
+        <div className="absolute bottom-3 right-3 z-10 flex flex-col gap-1.5">
+          {(
+            [
+              { Icon: ZoomIn, label: t("graph.zoom.in"), action: () => zoomBy(1.25) },
+              { Icon: ZoomOut, label: t("graph.zoom.out"), action: () => zoomBy(0.8) },
+              {
+                Icon: RotateCcw,
+                label: t("graph.zoom.reset"),
+                action: () => setTransform({ x: 0, y: 0, k: 1 }),
+              },
+            ] as const
+          ).map(({ Icon, label, action }) => (
+            <button
+              key={label}
+              onClick={action}
+              aria-label={label}
+              title={label}
+              className={cn(
+                "flex h-9 w-9 items-center justify-center rounded-lg",
+                "border border-border/60 bg-background/90 backdrop-blur",
+                "text-muted-foreground transition-colors hover:text-foreground hover:bg-accent/60",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              )}
+            >
+              <Icon className="h-4 w-4" />
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Legend */}

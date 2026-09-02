@@ -33,6 +33,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
           <button
             onClick={goDashboard}
+            aria-label={t("site.name")}
             className="group flex items-center gap-2.5 text-left"
           >
             <span className="relative flex h-8 w-8 items-center justify-center">

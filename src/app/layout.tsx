@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Fraunces, Newsreader } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/toaster";
 import { ThemeProvider } from "@/components/theme-provider";
+import { HtmlLangSync } from "@/components/html-lang-sync";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,9 +30,9 @@ const newsreader = Newsreader({
 export const metadata: Metadata = {
   title: "Reality's Architecture — A Micro-Learning Curriculum",
   description:
-    "Seventy-six lessons across ten weeks. Epistemics, cognition, social construction, power, complexity, political economy, the digital paradigm, and integrative praxis.",
+    "Seventy-six lessons across eight modules. Epistemics, cognition, social construction, power, complexity, political economy, the digital paradigm, and integrative praxis.",
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    icon: "/logo.svg",
   },
 };
 
@@ -51,6 +52,7 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
+          <HtmlLangSync />
           {children}
           <Toaster />
         </ThemeProvider>

@@ -75,22 +75,31 @@ export function Dashboard() {
             </p>
 
             <div className="mt-7 flex flex-wrap items-center gap-3">
-              <button
-                onClick={() => next && openLesson(next.id)}
-                className="group inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-all hover:gap-3 hover:opacity-90"
-              >
-                {syllabus.completed > 0 ? t("dash.continue") : t("dash.begin")}
-                <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-              </button>
-              <span className="text-sm text-muted-foreground">
-                {next ? (
-                  <>
+              {next ? (
+                <>
+                  <button
+                    onClick={() => openLesson(next.id)}
+                    className="group inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-all hover:gap-3 hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background"
+                  >
+                    {syllabus.completed > 0
+                      ? t("dash.continue")
+                      : t("dash.begin")}
+                    <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+                  </button>
+                  <span className="text-sm text-muted-foreground">
                     {t("dash.next")}{" "}
-                    <span className="text-foreground">{next.lessonCode}</span>{" "}
+                    <span className="text-foreground">
+                      {next.lessonCode}
+                    </span>{" "}
                     {next.concept}
-                  </>
-                ) : null}
-              </span>
+                  </span>
+                </>
+              ) : (
+                <div className="inline-flex items-center gap-2 rounded-full border border-emerald-500/30 bg-emerald-600/10 px-5 py-2.5 text-sm font-medium text-emerald-700 dark:text-emerald-400">
+                  <Check className="h-4 w-4" />
+                  {t("dash.allComplete")}
+                </div>
+              )}
             </div>
           </div>
 

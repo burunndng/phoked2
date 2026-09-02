@@ -174,6 +174,8 @@ export const useApp = create<AppState>((set, get) => ({
     const s = get().syllabus;
     if (!s) return null;
     const flat = s.modules.flatMap((m) => m.lessons);
-    return flat.find((l) => !l.completed) ?? flat[0] ?? null;
+    // When every lesson is complete, return null — the dashboard renders a
+    // celebration state instead of silently re-opening lesson 1.
+    return flat.find((l) => !l.completed) ?? null;
   },
 }));

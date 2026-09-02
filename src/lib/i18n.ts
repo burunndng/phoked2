@@ -32,11 +32,12 @@ const en: Dict = {
   "dash.title": "Understanding Reality's Architecture",
   "dash.titleAccent": "Reality's",
   "dash.subtitle":
-    "Seventy-six lessons across ten weeks. A daily micro-session through epistemics, cognition, social construction, power, complexity, political economy, the digital paradigm — and the praxis of holding them all at once.",
+    "Seventy-six lessons across eight modules. A daily micro-session through epistemics, cognition, social construction, power, complexity, political economy, the digital paradigm — and the praxis of holding them all at once.",
   "dash.begin": "Begin the journey",
   "dash.continue": "Continue",
   "dash.next": "Next:",
   "dash.complete": "complete",
+  "dash.allComplete": "Curriculum complete — every lesson read.",
   "dash.lessons": "lessons",
   "dash.of": "of",
 
@@ -232,6 +233,9 @@ const en: Dict = {
   "graph.stats.nodes": "nodes",
   "graph.stats.refs": "cross-references",
   "graph.loading": "Building the graph…",
+  "graph.zoom.in": "Zoom in",
+  "graph.zoom.out": "Zoom out",
+  "graph.zoom.reset": "Reset view",
 };
 
 const es: Dict = {
@@ -254,11 +258,12 @@ const es: Dict = {
   "dash.title": "Comprendiendo la arquitectura de la realidad",
   "dash.titleAccent": "de la realidad",
   "dash.subtitle":
-    "Setenta y seis lecciones a lo largo de diez semanas. Una micro-sesión diaria sobre epistemología, cognición, construcción social, poder, complejidad, economía política, el paradigma digital — y la praxis de sostenerlo todo a la vez.",
+    "Setenta y seis lecciones en ocho módulos. Una micro-sesión diaria sobre epistemología, cognición, construcción social, poder, complejidad, economía política, el paradigma digital — y la praxis de sostenerlo todo a la vez.",
   "dash.begin": "Comenzar el recorrido",
   "dash.continue": "Continuar",
   "dash.next": "Siguiente:",
   "dash.complete": "completado",
+  "dash.allComplete": "Currículo completo — todas las lecciones leídas.",
   "dash.lessons": "lecciones",
   "dash.of": "de",
 
@@ -454,6 +459,9 @@ const es: Dict = {
   "graph.stats.nodes": "nodos",
   "graph.stats.refs": "referencias cruzadas",
   "graph.loading": "Construyendo el grafo…",
+  "graph.zoom.in": "Acercar",
+  "graph.zoom.out": "Alejar",
+  "graph.zoom.reset": "Restablecer vista",
 };
 
 const DICTS: Record<Lang, Dict> = { en, es };

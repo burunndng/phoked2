@@ -30,6 +30,11 @@ export function ProgressRing({
     <div
       className="relative inline-flex items-center justify-center"
       style={{ width: size, height: size }}
+      role="progressbar"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(clamped * 100)}
+      aria-label={sublabel ?? "Progress"}
     >
       <svg
         width={size}

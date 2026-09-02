@@ -9,7 +9,7 @@ import { LessonReader } from "@/components/curriculum/lesson-reader";
 import { Atlas } from "@/components/curriculum/atlas";
 import { GraphView } from "@/components/curriculum/graph-view";
 import { About } from "@/components/curriculum/about";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, MotionConfig } from "framer-motion";
 import { useT } from "@/hooks/use-t";
 
 export default function Home() {
@@ -38,32 +38,34 @@ export default function Home() {
   }, [syllabus, syllabusLoading, syllabusError, loadSyllabus, syllabusLang, lang]);
 
   return (
-    <AppShell>
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={view}
-          initial={{ opacity: 0, y: 6 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -6 }}
-          transition={{ duration: 0.25, ease: "easeOut" }}
-        >
-          {!syllabus && syllabusLoading ? (
-            <BootState />
-          ) : syllabusError ? (
-            <ErrorBoot message={syllabusError} onRetry={loadSyllabus} />
-          ) : syllabus ? (
-            <>
-              {view === "dashboard" && <Dashboard />}
-              {view === "module" && <ModuleView />}
-              {view === "lesson" && <LessonReader />}
-              {view === "atlas" && <Atlas />}
-              {view === "graph" && <GraphView />}
-              {view === "about" && <About />}
-            </>
-          ) : null}
-        </motion.div>
-      </AnimatePresence>
-    </AppShell>
+    <MotionConfig reducedMotion="user">
+      <AppShell>
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={view}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.25, ease: "easeOut" }}
+          >
+            {!syllabus && syllabusLoading ? (
+              <BootState />
+            ) : syllabusError ? (
+              <ErrorBoot message={syllabusError} onRetry={loadSyllabus} />
+            ) : syllabus ? (
+              <>
+                {view === "dashboard" && <Dashboard />}
+                {view === "module" && <ModuleView />}
+                {view === "lesson" && <LessonReader />}
+                {view === "atlas" && <Atlas />}
+                {view === "graph" && <GraphView />}
+                {view === "about" && <About />}
+              </>
+            ) : null}
+          </motion.div>
+        </AnimatePresence>
+      </AppShell>
+    </MotionConfig>
   );
 }
 

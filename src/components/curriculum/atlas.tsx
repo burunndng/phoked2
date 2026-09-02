@@ -98,7 +98,13 @@ function ModuleColumn({
         <p className="mt-2 font-display text-2xl font-medium leading-none text-muted-foreground/60">
           {m.number}
         </p>
-        <p className="mt-1.5 text-[10px] uppercase tracking-wider text-muted-foreground">
+        <p
+          className="mt-1.5 line-clamp-2 text-[10px] leading-snug text-muted-foreground"
+          title={m.title}
+        >
+          {m.title}
+        </p>
+        <p className="mt-1 text-[10px] uppercase tracking-wider text-muted-foreground">
           {done}/{m.lessons.length}
         </p>
       </div>
@@ -116,11 +122,12 @@ function ModuleColumn({
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => onOpenLesson(l.id)}
-              title={`${l.lessonCode} — ${l.concept}${
+              aria-label={`${l.lessonCode} — ${l.concept}${
                 contested ? ` · ${t(sMeta.labelKey)}` : ""
               }`}
               className={cn(
                 "group relative flex aspect-square w-full flex-col items-center justify-center gap-0.5 rounded-lg border text-center transition-colors",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                 l.completed
                   ? cn(accent.soft, accent.border)
                   : "border-border/50 bg-card hover:bg-accent/40"

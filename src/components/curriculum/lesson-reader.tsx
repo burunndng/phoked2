@@ -10,6 +10,7 @@ import {
   type LessonStatus,
 } from "@/lib/accents";
 import type { LessonContent } from "@/lib/lesson-generator";
+import type { ComprehensionMCQ } from "@/lib/quiz-i18n";
 import {
   ArrowLeft,
   ArrowRight,
@@ -33,7 +34,10 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useT } from "@/hooks/use-t";
 import type { Lang } from "@/lib/i18n";
-import { getReflection, setReflection } from "@/lib/progress";
+import {
+  getReflection,
+  setReflection as saveReflection,
+} from "@/lib/progress";
 
 interface LessonResponse {
   id: string;
@@ -53,6 +57,7 @@ interface LessonResponse {
     accent: string;
   };
   content: LessonContent;
+  quiz: ComprehensionMCQ | null;
   reflection: string;
   completed: boolean;
 }
@@ -123,7 +128,7 @@ export function LessonReader() {
       reflectionTimer.current = setTimeout(() => {
         setSavingReflection(true);
         // Save to localStorage (no server call needed).
-        setReflection(lessonId, text);
+        saveReflection(lessonId, text);
         // Brief "saving" indicator for UX feedback.
         setTimeout(() => setSavingReflection(false), 300);
       }, 400);
@@ -323,6 +328,9 @@ export function LessonReader() {
               </p>
             </div>
 
+            {/* Comprehension check (optional, never gates completion) */}
+            {data.quiz && <LessonQuiz quiz={data.quiz} />}
+
             {/* Reflection */}
             <div className="mt-10 rounded-xl border border-border/60 bg-card p-5">
               <div className="mb-2 flex items-center justify-between">
@@ -412,6 +420,140 @@ export function LessonReader() {
           </motion.article>
         ) : null}
       </AnimatePresence>
+    </div>
+  );
+}
+
+// Optional gist-comprehension MCQ shown after the lesson body.
+// Correct answer locks the quiz and reveals the explanation; an incorrect
+// pick lets the learner retry. Never gates "Mark complete".
+function LessonQuiz({ quiz }: { quiz: ComprehensionMCQ }) {
+  const { t } = useT();
+  const [selected, setSelected] = React.useState<number | null>(null);
+  const [result, setResult] = React.useState<
+    "idle" | "correct" | "incorrect"
+  >("idle");
+
+  // Reset when navigating to a different lesson's quiz.
+  const question = quiz.question;
+  React.useEffect(() => {
+    setSelected(null);
+    setResult("idle");
+  }, [question]);
+
+  const locked = result === "correct";
+  const LETTERS = ["A", "B", "C", "D"] as const;
+
+  const pick = (i: number) => {
+    if (locked) return;
+    setSelected(i);
+    setResult("idle");
+  };
+
+  const check = () => {
+    if (selected === null) return;
+    setResult(selected === quiz.answerIndex ? "correct" : "incorrect");
+  };
+
+  return (
+    <div className="mt-2 rounded-xl border border-border/60 bg-card p-5">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+          {t("quiz.eyebrow")}
+        </span>
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70">
+          {t("quiz.optional")}
+        </span>
+      </div>
+      <p className="font-display text-lg leading-snug">{quiz.question}</p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        {t("quiz.instruction")}
+      </p>
+
+      <div
+        className="mt-4 flex flex-col gap-2"
+        role="radiogroup"
+        aria-label={quiz.question}
+      >
+        {quiz.options.map((opt, i) => {
+          const isSelected = selected === i;
+          const showCorrect = locked && i === quiz.answerIndex;
+          return (
+            <button
+              key={i}
+              type="button"
+              role="radio"
+              aria-checked={isSelected}
+              disabled={locked}
+              onClick={() => pick(i)}
+              className={cn(
+                "flex items-start gap-3 rounded-lg border px-4 py-3 text-left text-sm transition-colors",
+                "border-border/60 hover:border-border",
+                isSelected && !locked && "border-amber-500/50 bg-amber-500/10",
+                showCorrect && "border-emerald-500/60 bg-emerald-500/10"
+              )}
+            >
+              <span
+                className={cn(
+                  "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold",
+                  isSelected &&
+                    !locked &&
+                    "border-amber-500/60 text-amber-700 dark:text-amber-400",
+                  showCorrect &&
+                    "border-emerald-500/60 text-emerald-700 dark:text-emerald-400",
+                  !isSelected &&
+                    !showCorrect &&
+                    "border-border text-muted-foreground"
+                )}
+              >
+                {LETTERS[i]}
+              </span>
+              <span className="leading-relaxed">{opt}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        {!locked && (
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={selected === null}
+            onClick={check}
+            className="gap-1.5"
+          >
+            {result === "incorrect" ? (
+              <RotateCw className="h-3.5 w-3.5" />
+            ) : (
+              <Check className="h-3.5 w-3.5" />
+            )}
+            {result === "incorrect" ? t("quiz.tryAgain") : t("quiz.check")}
+          </Button>
+        )}
+        {result === "correct" && (
+          <span className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+            <Check className="h-4 w-4" /> {t("quiz.correct")}
+          </span>
+        )}
+        {result === "incorrect" && (
+          <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+            <AlertTriangle className="h-4 w-4 text-amber-500" />{" "}
+            {t("quiz.incorrect")}
+          </span>
+        )}
+      </div>
+
+      {locked && quiz.explanation && (
+        <div className="mt-4 rounded-lg bg-muted/40 px-4 py-3">
+          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            {t("quiz.explanation")}
+          </p>
+          <p className="mt-1 text-sm leading-relaxed text-foreground/90">
+            {quiz.explanation}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

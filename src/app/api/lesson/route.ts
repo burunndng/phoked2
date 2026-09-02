@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSyllabus } from "@/lib/syllabus-i18n";
 import { getLessonContent } from "@/lib/lesson-i18n";
+import { getLessonQuiz } from "@/lib/quiz-i18n";
 import type { LessonStatus } from "@/lib/syllabus";
 import type { Lang } from "@/lib/i18n";
 
@@ -76,5 +77,6 @@ export async function GET(req: Request) {
     completed: false, // client-side now
     lang,
     content,
+    quiz: getLessonQuiz(l.lessonCode, lang) ?? null,
   });
 }

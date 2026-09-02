@@ -40,7 +40,6 @@
     "node_modules",
     "scripts",
     "examples",
-    "prisma",
     "mini-services"
   ]
 }

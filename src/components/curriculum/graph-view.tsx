@@ -253,9 +253,12 @@ export function GraphView() {
   const highlighted = React.useMemo(() => {
     if (!hovered) return null;
     const connected = new Set<string>([hovered]);
+    // d3 mutates edge endpoints in place; resolve string|number|SimNode → id.
+    const toId = (v: SimNode | string | number): string =>
+      typeof v === "object" ? v.id : String(v);
     for (const e of simEdges) {
-      const s = typeof e.source === "string" ? e.source : e.source?.id;
-      const t = typeof e.target === "string" ? e.target : e.target?.id;
+      const s = toId(e.source);
+      const t = toId(e.target);
       if (s === hovered && t) connected.add(t);
       if (t === hovered && s) connected.add(s);
     }

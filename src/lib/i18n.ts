@@ -141,6 +141,17 @@ const en: Dict = {
   "lesson.retry": "Retry",
   "lesson.failed": "Failed to compose lesson. Please retry.",
 
+  // ── Comprehension quiz ────────────────────────────────────
+  "quiz.eyebrow": "Comprehension check",
+  "quiz.optional": "optional",
+  "quiz.instruction":
+    "Pick the answer that best captures this lesson's core claim.",
+  "quiz.check": "Check answer",
+  "quiz.tryAgain": "Try again",
+  "quiz.correct": "Correct",
+  "quiz.incorrect": "Not quite — try again",
+  "quiz.explanation": "Why",
+
   // ── Atlas ─────────────────────────────────────────────────
   "atlas.eyebrow": "The Atlas",
   "atlas.title": "All seventy-six lessons",
@@ -351,6 +362,17 @@ const es: Dict = {
     "Cada sesión está pre-escrita — un indicador del mecanismo, un ejemplo canónico, la tensión que la mantiene viva, y una práctica que puedes hacer en noventa segundos.",
   "lesson.retry": "Reintentar",
   "lesson.failed": "No se pudo componer la lección. Reinténtalo.",
+
+  // ── Comprehension quiz ────────────────────────────────────
+  "quiz.eyebrow": "Comprobación de comprensión",
+  "quiz.optional": "opcional",
+  "quiz.instruction":
+    "Elige la respuesta que mejor capture la afirmación central de esta lección.",
+  "quiz.check": "Comprobar respuesta",
+  "quiz.tryAgain": "Intentarlo de nuevo",
+  "quiz.correct": "Correcto",
+  "quiz.incorrect": "Casi — inténtalo de nuevo",
+  "quiz.explanation": "Por qué",
 
   // ── Atlas ─────────────────────────────────────────────────
   "atlas.eyebrow": "El atlas",

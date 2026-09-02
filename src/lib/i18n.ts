@@ -127,6 +127,7 @@ const en: Dict = {
   "lesson.criticalReading": "Critical reading",
   "lesson.privateReflection": "Private reflection",
   "lesson.saving": "saving",
+  "lesson.saved": "saved",
   "lesson.reflectionPlaceholder":
     "What landed? What resists? What does this make visible that was invisible a moment ago?",
   "lesson.markComplete": "Mark complete",
@@ -353,6 +354,7 @@ const es: Dict = {
   "lesson.criticalReading": "Lectura crítica",
   "lesson.privateReflection": "Reflexión privada",
   "lesson.saving": "guardando",
+  "lesson.saved": "guardado",
   "lesson.reflectionPlaceholder":
     "¿Qué te llegó? ¿Qué resiste? ¿Qué hace visible esto que era invisible hace un momento?",
   "lesson.markComplete": "Marcar como completo",

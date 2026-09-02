@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { motion } from "framer-motion";
 import { useApp } from "@/store/use-app";
 import { ThemeToggle } from "./theme-toggle";
 import { Compass, BookOpen, LayoutGrid, Info, Languages, Share2 } from "lucide-react";
@@ -50,43 +51,25 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </span>
           </button>
 
-          <nav className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
+          <nav className="flex items-center gap-1" aria-label="Primary">
+            <NavButton
+              active={view === "atlas"}
               onClick={goAtlas}
-              className={cn(
-                "gap-1.5 text-muted-foreground",
-                view === "atlas" && "text-foreground"
-              )}
-            >
-              <LayoutGrid className="h-4 w-4" strokeWidth={1.5} />
-              <span className="hidden sm:inline">{t("nav.atlas")}</span>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
+              icon={<LayoutGrid className="h-4 w-4" strokeWidth={1.5} />}
+              label={t("nav.atlas")}
+            />
+            <NavButton
+              active={view === "graph"}
               onClick={goGraph}
-              className={cn(
-                "gap-1.5 text-muted-foreground",
-                view === "graph" && "text-foreground"
-              )}
-            >
-              <Share2 className="h-4 w-4" strokeWidth={1.5} />
-              <span className="hidden sm:inline">{t("nav.graph")}</span>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
+              icon={<Share2 className="h-4 w-4" strokeWidth={1.5} />}
+              label={t("nav.graph")}
+            />
+            <NavButton
+              active={view === "about"}
               onClick={goAbout}
-              className={cn(
-                "gap-1.5 text-muted-foreground",
-                view === "about" && "text-foreground"
-              )}
-            >
-              <Info className="h-4 w-4" strokeWidth={1.5} />
-              <span className="hidden sm:inline">{t("nav.about")}</span>
-            </Button>
+              icon={<Info className="h-4 w-4" strokeWidth={1.5} />}
+              label={t("nav.about")}
+            />
             <div className="mx-1 hidden h-5 w-px bg-border sm:block" />
             <div className="hidden items-center gap-1.5 px-2 text-xs text-muted-foreground sm:flex">
               <BookOpen className="h-3.5 w-3.5" strokeWidth={1.5} />
@@ -149,5 +132,42 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </footer>
     </div>
+  );
+}
+
+// Nav item with a sliding active pill. A single shared layoutId makes the
+// highlight glide between tabs instead of popping in/out per button.
+function NavButton({
+  active,
+  onClick,
+  icon,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  return (
+    <Button
+      variant="ghost"
+      size="sm"
+      onClick={onClick}
+      aria-current={active ? "page" : undefined}
+      className={cn(
+        "relative gap-1.5 text-muted-foreground transition-colors",
+        active && "text-foreground"
+      )}
+    >
+      {active && (
+        <motion.span
+          layoutId="nav-active-pill"
+          className="absolute inset-0 rounded-md bg-muted"
+          transition={{ type: "spring", stiffness: 420, damping: 34 }}
+        />
+      )}
+      <span className="relative">{icon}</span>
+      <span className="relative hidden sm:inline">{label}</span>
+    </Button>
   );
 }

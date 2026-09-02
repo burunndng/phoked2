@@ -145,12 +145,31 @@
   font-size: 1.075rem;
   line-height: 1.78;
   letter-spacing: -0.003em;
+  /* comfortable reading measure (~65-70 characters) */
+  max-width: 68ch;
+  text-wrap: pretty;
 }
 .prose-reader p {
   margin-bottom: 1.15em;
 }
 .prose-reader p:last-child {
   margin-bottom: 0;
+}
+
+/* Balance heading line-breaks so multi-line titles don't leave
+   a single orphan word on the last line. */
+h1,
+h2,
+.font-display {
+  text-wrap: balance;
+}
+
+/* Editorial left rule for pull-quotes / Zeigarnik hooks.
+   Pair with style={{ "--accent-color": accent.hex }}. */
+.pull-rule {
+  border-left: 2px solid
+    color-mix(in oklch, var(--accent-color, var(--border)) 55%, transparent);
+  padding-left: 1.25rem;
 }
 
 .font-display {

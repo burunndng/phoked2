@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useSpring } from "framer-motion";
 import { useApp } from "@/store/use-app";
 import {
   getAccent,
@@ -77,8 +77,13 @@ export function LessonReader() {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
   const [reflection, setReflection] = React.useState("");
-  const [savingReflection, setSavingReflection] = React.useState(false);
+  const [reflectionStatus, setReflectionStatus] = React.useState<
+    "idle" | "saving" | "saved"
+  >("idle");
   const reflectionTimer = React.useRef<ReturnType<typeof setTimeout> | null>(
+    null
+  );
+  const statusResetTimer = React.useRef<ReturnType<typeof setTimeout> | null>(
     null
   );
   const { toast } = useToast();
@@ -125,16 +130,29 @@ export function LessonReader() {
     (text: string) => {
       if (!lessonId) return;
       if (reflectionTimer.current) clearTimeout(reflectionTimer.current);
+      if (statusResetTimer.current) clearTimeout(statusResetTimer.current);
+      
+      setReflectionStatus("saving");
       reflectionTimer.current = setTimeout(() => {
-        setSavingReflection(true);
         // Save to localStorage (no server call needed).
         saveReflection(lessonId, text);
-        // Brief "saving" indicator for UX feedback.
-        setTimeout(() => setSavingReflection(false), 300);
-      }, 400);
+        setReflectionStatus("saved");
+        statusResetTimer.current = setTimeout(() => {
+          setReflectionStatus("idle");
+        }, 2200);
+      }, 500);
     },
     [lessonId]
   );
+
+  // Scroll reading progress indicator (hooks must run unconditionally,
+  // before the early return below).
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, {
+    stiffness: 200,
+    damping: 30,
+    restDelta: 0.001,
+  });
 
   if (!meta) return null;
   const accent = getAccent(meta.module.accent);
@@ -144,7 +162,15 @@ export function LessonReader() {
   const next = nextLesson(lessonId!);
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
+    <div className="relative mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
+      {/* Scroll reading progress bar fixed at header bottom */}
+      {data && (
+        <motion.div
+          className="fixed left-0 right-0 top-16 z-30 h-[2.5px] origin-left bg-gradient-to-r from-amber-500 via-rose-500 to-emerald-500 opacity-80"
+          style={{ scaleX }}
+          aria-hidden="true"
+        />
+      )}
       {/* breadcrumb */}
       <div className="mb-8 flex items-center justify-between gap-3">
         <button
@@ -318,7 +344,10 @@ export function LessonReader() {
             </div>
 
             {/* Zeigarnik Hook */}
-            <div className="my-10">
+            <div
+              className="pull-rule my-10"
+              style={{ "--accent-color": accent.hex } as React.CSSProperties}
+            >
               <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-muted-foreground">
                 <HelpCircle className="h-3.5 w-3.5" />
                 {t("lesson.zeigarnikHook")}
@@ -340,11 +369,22 @@ export function LessonReader() {
                 >
                   {t("lesson.privateReflection")}
                 </label>
-                {savingReflection && (
-                  <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                    <Loader2 className="h-3 w-3 animate-spin" /> {t("lesson.saving")}
-                  </span>
-                )}
+                <div className="flex items-center gap-1.5 text-[10px]">
+                  {reflectionStatus === "saving" && (
+                    <span className="flex items-center gap-1 text-muted-foreground">
+                      <Loader2 className="h-3 w-3 animate-spin" /> {t("lesson.saving")}
+                    </span>
+                  )}
+                  {reflectionStatus === "saved" && (
+                    <motion.span
+                      initial={{ opacity: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400"
+                    >
+                      <Check className="h-3 w-3" /> {t("lesson.saved")}
+                    </motion.span>
+                  )}
+                </div>
               </div>
               <Textarea
                 id="reflection"
@@ -433,12 +473,14 @@ function LessonQuiz({ quiz }: { quiz: ComprehensionMCQ }) {
   const [result, setResult] = React.useState<
     "idle" | "correct" | "incorrect"
   >("idle");
+  const optionsRef = React.useRef<(HTMLButtonElement | null)[]>([]);
 
   // Reset when navigating to a different lesson's quiz.
   const question = quiz.question;
   React.useEffect(() => {
     setSelected(null);
     setResult("idle");
+    optionsRef.current = [];
   }, [question]);
 
   const locked = result === "correct";
@@ -453,6 +495,25 @@ function LessonQuiz({ quiz }: { quiz: ComprehensionMCQ }) {
   const check = () => {
     if (selected === null) return;
     setResult(selected === quiz.answerIndex ? "correct" : "incorrect");
+  };
+
+  // Keyboard navigation for radiogroup: ArrowUp, ArrowDown, and number keys 1-4
+  const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
+    if (locked) return;
+    if (e.key === "ArrowDown" || e.key === "ArrowRight") {
+      e.preventDefault();
+      const nextIdx = (index + 1) % quiz.options.length;
+      pick(nextIdx);
+      optionsRef.current[nextIdx]?.focus();
+    } else if (e.key === "ArrowUp" || e.key === "ArrowLeft") {
+      e.preventDefault();
+      const prevIdx = (index - 1 + quiz.options.length) % quiz.options.length;
+      pick(prevIdx);
+      optionsRef.current[prevIdx]?.focus();
+    } else if (e.key === "Enter" && selected !== null) {
+      e.preventDefault();
+      check();
+    }
   };
 
   return (
@@ -481,29 +542,34 @@ function LessonQuiz({ quiz }: { quiz: ComprehensionMCQ }) {
           return (
             <button
               key={i}
+              ref={(el) => {
+                optionsRef.current[i] = el;
+              }}
               type="button"
               role="radio"
               aria-checked={isSelected}
+              tabIndex={isSelected || (selected === null && i === 0) ? 0 : -1}
               disabled={locked}
               onClick={() => pick(i)}
+              onKeyDown={(e) => handleKeyDown(e, i)}
               className={cn(
-                "flex items-start gap-3 rounded-lg border px-4 py-3 text-left text-sm transition-colors",
+                "group flex items-start gap-3 rounded-lg border px-4 py-3 text-left text-sm transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background",
                 "border-border/60 hover:border-border",
-                isSelected && !locked && "border-amber-500/50 bg-amber-500/10",
-                showCorrect && "border-emerald-500/60 bg-emerald-500/10"
+                isSelected && !locked && "border-amber-500/50 bg-amber-500/10 shadow-sm",
+                showCorrect && "border-emerald-500/60 bg-emerald-500/10 shadow-sm"
               )}
             >
               <span
                 className={cn(
-                  "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold",
+                  "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-[10px] font-semibold transition-colors",
                   isSelected &&
                     !locked &&
-                    "border-amber-500/60 text-amber-700 dark:text-amber-400",
+                    "border-amber-500/60 bg-amber-500/20 text-amber-700 dark:text-amber-400",
                   showCorrect &&
-                    "border-emerald-500/60 text-emerald-700 dark:text-emerald-400",
+                    "border-emerald-500/60 bg-emerald-500/20 text-emerald-700 dark:text-emerald-400",
                   !isSelected &&
                     !showCorrect &&
-                    "border-border text-muted-foreground"
+                    "border-border text-muted-foreground group-hover:border-border/80"
                 )}
               >
                 {LETTERS[i]}
@@ -521,7 +587,7 @@ function LessonQuiz({ quiz }: { quiz: ComprehensionMCQ }) {
             variant="outline"
             disabled={selected === null}
             onClick={check}
-            className="gap-1.5"
+            className="gap-1.5 transition-all"
           >
             {result === "incorrect" ? (
               <RotateCw className="h-3.5 w-3.5" />
@@ -532,27 +598,39 @@ function LessonQuiz({ quiz }: { quiz: ComprehensionMCQ }) {
           </Button>
         )}
         {result === "correct" && (
-          <span className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400">
+          <motion.span
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-600 dark:text-emerald-400"
+          >
             <Check className="h-4 w-4" /> {t("quiz.correct")}
-          </span>
+          </motion.span>
         )}
         {result === "incorrect" && (
-          <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+          <motion.span
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground"
+          >
             <AlertTriangle className="h-4 w-4 text-amber-500" />{" "}
             {t("quiz.incorrect")}
-          </span>
+          </motion.span>
         )}
       </div>
 
       {locked && quiz.explanation && (
-        <div className="mt-4 rounded-lg bg-muted/40 px-4 py-3">
-          <p className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+        <motion.div
+          initial={{ opacity: 0, y: 4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mt-4 rounded-lg border border-emerald-500/20 bg-emerald-500/[0.05] px-4 py-3"
+        >
+          <p className="text-[10px] uppercase tracking-[0.18em] text-emerald-700 dark:text-emerald-400 font-semibold">
             {t("quiz.explanation")}
           </p>
           <p className="mt-1 text-sm leading-relaxed text-foreground/90">
             {quiz.explanation}
           </p>
-        </div>
+        </motion.div>
       )}
     </div>
   );
